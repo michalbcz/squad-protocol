@@ -1,0 +1,38 @@
+{
+  "format": "squad-protocol/scenario",
+  "version": 1,
+  "id": "bootcamp1",
+  "titleKey": "scenario.bootcamp1.title",
+  "briefingKey": "scenario.bootcamp1.briefing",
+  "strings": {
+    "en": {
+      "scenario.bootcamp1.title": "Boot Camp: First Steps",
+      "scenario.bootcamp1.briefing": "Learn to move, look and shoot. Take out the training drone."
+    },
+    "cs": {
+      "scenario.bootcamp1.title": "Výcvik: První kroky",
+      "scenario.bootcamp1.briefing": "Nauč se pohybovat, rozhlížet a střílet. Zneškodni cvičný dron."
+    }
+  },
+  "map": [
+    "################",
+    "#..............#",
+    "#..............#",
+    "#.....C........#",
+    "#..............#",
+    "#######D########",
+    "#..............#",
+    "#..............#",
+    "#..............#",
+    "################"
+  ],
+  "sides": [
+    { "id": "blue", "nameKey": "side.blue", "controller": "human" },
+    { "id": "red", "nameKey": "side.drones", "controller": "ai" }
+  ],
+  "units": [
+    { "id": "b1", "side": "blue", "nameKey": "unit.vega", "x": 3, "y": 7, "facing": 2, "weaponId": "pulseRifle", "template": { "maxAp": 40, "maxHp": 60, "armor": 4, "accuracy": 70 } },
+    { "id": "r1", "side": "red", "nameKey": "unit.drone", "x": 12, "y": 2, "facing": 6, "weaponId": "sidearm", "template": { "maxAp": 1, "maxHp": 20, "armor": 0, "accuracy": 1 } }
+  ],
+  "victory": [{ "type": "eliminate" }]
+}

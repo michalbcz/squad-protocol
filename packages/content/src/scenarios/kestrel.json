@@ -1,0 +1,50 @@
+{
+  "format": "squad-protocol/scenario",
+  "version": 1,
+  "id": "kestrel",
+  "titleKey": "scenario.kestrel.title",
+  "briefingKey": "scenario.kestrel.briefing",
+  "strings": {
+    "en": {
+      "scenario.kestrel.title": "Relay Station Kestrel",
+      "scenario.kestrel.briefing": "A rogue security detail has seized the Kestrel relay. Breach the compound and neutralise all hostiles."
+    },
+    "cs": {
+      "scenario.kestrel.title": "Retranslační stanice Kestrel",
+      "scenario.kestrel.briefing": "Vzbouřená ochranka obsadila stanici Kestrel. Proniknte do areálu a zneškodněte všechny nepřátele."
+    }
+  },
+  "map": [
+    ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+    ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+    ",,,,,,,,,############,,,,,,,,,",
+    ",,,C,,,,,,#....#.....#,,,,,,,,",
+    ",,,,,,,,,,#....D.....W,,,,C,,,",
+    ",,,,,,,,,,#....#.....#,,,,,,,,",
+    ",,,,,,,,,,##D###..C..#,,,,,,,,",
+    ",,,,,,,,,,#..........D,,,,,,,,",
+    ",,C,,,,,,,W..........#,,,,,,,,",
+    ",,,,,,,,,,#...C......#,,,,,,,,",
+    ",,,,,,,,,,####D####W##,,,,,,,,",
+    ",,,,,,,,,,,,,,,,,,,,,,,,,~~~,,",
+    ",,,,,,,C,,,,,,,,,,,,,,,,,~~~,,",
+    ",,,,,,,,,,,,,,,,C,,,,,,,,,,,,,",
+    ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+    ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"
+  ],
+  "sides": [
+    { "id": "blue", "nameKey": "side.blue", "controller": "human" },
+    { "id": "red", "nameKey": "side.red", "controller": "human" }
+  ],
+  "units": [
+    { "id": "b1", "side": "blue", "nameKey": "unit.vega", "x": 3, "y": 14, "facing": 0, "weaponId": "pulseRifle", "template": { "maxAp": 36, "maxHp": 60, "armor": 4, "accuracy": 65 } },
+    { "id": "b2", "side": "blue", "nameKey": "unit.okoro", "x": 5, "y": 14, "facing": 0, "weaponId": "pulseRifle", "template": { "maxAp": 36, "maxHp": 60, "armor": 4, "accuracy": 60 } },
+    { "id": "b3", "side": "blue", "nameKey": "unit.lind", "x": 7, "y": 15, "facing": 0, "weaponId": "marksmanLaser", "template": { "maxAp": 32, "maxHp": 50, "armor": 2, "accuracy": 75 } },
+    { "id": "b4", "side": "blue", "nameKey": "unit.marsh", "x": 4, "y": 15, "facing": 1, "weaponId": "sidearm", "template": { "maxAp": 42, "maxHp": 55, "armor": 3, "accuracy": 60 } },
+    { "id": "r1", "side": "red", "nameKey": "unit.guard", "x": 13, "y": 4, "facing": 4, "weaponId": "pulseRifle", "template": { "maxAp": 34, "maxHp": 55, "armor": 4, "accuracy": 55 } },
+    { "id": "r2", "side": "red", "nameKey": "unit.guard", "x": 17, "y": 8, "facing": 4, "weaponId": "pulseRifle", "template": { "maxAp": 34, "maxHp": 55, "armor": 4, "accuracy": 55 } },
+    { "id": "r3", "side": "red", "nameKey": "unit.guard", "x": 19, "y": 4, "facing": 2, "weaponId": "sidearm", "template": { "maxAp": 38, "maxHp": 50, "armor": 3, "accuracy": 55 } },
+    { "id": "r4", "side": "red", "nameKey": "unit.sniper", "x": 24, "y": 3, "facing": 5, "weaponId": "marksmanLaser", "template": { "maxAp": 30, "maxHp": 45, "armor": 2, "accuracy": 70 } }
+  ],
+  "victory": [{ "type": "eliminate" }, { "type": "turnLimit", "turns": 20, "winner": "red" }]
+}
