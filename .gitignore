@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+.vite/
+.svelte-kit/
+
+# Tests & coverage
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Native wrappers (Tauri / Capacitor)
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/local.properties
+apps/mobile/ios/App/Pods/
+apps/mobile/ios/App/build/
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+
+# Sidecar binaries fetched at build time
+apps/desktop/src-tauri/binaries/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editors & OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*~
+
+# Local Claude Code settings (shared settings and skills stay tracked)
+.claude/settings.local.json

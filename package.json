@@ -1,0 +1,17 @@
+{
+  "name": "squad-protocol",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.4.2",
+  "scripts": {
+    "dev": "pnpm --filter @sp/web dev",
+    "build": "pnpm --filter @sp/web build",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit && pnpm --filter @sp/web check"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}
