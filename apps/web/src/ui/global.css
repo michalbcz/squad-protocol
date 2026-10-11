@@ -1,0 +1,48 @@
+:root {
+  --bg: #0d1117;
+  --panel: rgb(18 24 33 / 0.92);
+  --panel-solid: #121821;
+  --line: #2a3442;
+  --text: #e6edf3;
+  --muted: #8b98a8;
+  --accent: #4aa3ff;
+  --warn: #ffd34d;
+  --bad: #ff6b6b;
+  --good: #7cf29a;
+  --hit: 44px;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Noto Sans', 'Noto Sans CJK SC', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-tap-highlight-color: transparent;
+}
+* { box-sizing: border-box; }
+html, body, #app { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
+button {
+  font: inherit;
+  color: inherit;
+  background: #1c2533;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-height: var(--hit);
+  min-width: var(--hit);
+  padding-inline: 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+button:hover:not(:disabled) { background: #243044; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button.primary { background: #1f6feb; border-color: #388bfd; }
+button.active { background: #2d4a73; border-color: var(--accent); }
+kbd {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75em;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  color: var(--muted);
+  margin-inline-start: 6px;
+}
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(6px); }
+.muted { color: var(--muted); }
