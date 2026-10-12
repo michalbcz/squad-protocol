@@ -40,7 +40,7 @@ The UI only talks to a `Session` (`apps/web/src/lib/session.ts`). `LocalSession`
 | 2. Engine core (AP, LOS/fog, shooting, reaction fire, doors, destructible cover), hotseat, determinism tests | ✅ |
 | 3. Inventory, explosives, buy phase, saves/replays | ⏳ replays exist in the engine (`Match.toReplay`); the rest is not started |
 | 4. AI | 🟡 basic utility AI (fair: view-only); no cover scoring or Web Worker yet |
-| 5. Tutorial, refresher, codex | 🟡 Boot Camp 1 of 4–5, card-based refresher, searchable codex |
+| 5. Tutorial, refresher, codex | ✅ 4-mission Boot Camp, coach tips, tips & tricks, refresher, searchable codex (📋 explosives mission once those rules exist) |
 | 6. Networking (WS host, LAN mDNS, cloudflared, WebRTC) | ❌ the `Session` interface and event redaction are ready for it |
 | 7. Scenario editor | ❌ |
 | 8. Tauri/Steam, Capacitor wrappers, art/audio | ❌ (the web build already uses a relative `base` for wrapping) |

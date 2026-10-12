@@ -12,3 +12,4 @@ Architecture and game-design decisions, newest last. Create one with `just adr "
 | [0006](0006-spiritual-remake-ip.md) | Spiritual remake: original name, art, maps and text | Game design | Accepted |
 | [0007](0007-ap-movement-and-reaction-fire.md) | AP economy, facing-aware movement and probabilistic reaction fire | Game design | Accepted |
 | [0008](0008-hit-chance-and-ballistics.md) | Hit chance formula and simulated miss trajectories | Game design | Accepted |
+| [0009](0009-boot-camp-curriculum-and-coach-tips.md) | Four-mission Boot Camp with scripted opponents and contextual coach tips | Both | Accepted |

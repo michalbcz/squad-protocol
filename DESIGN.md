@@ -32,7 +32,7 @@ A square grid, 8-directional. Tiles have a terrain type and an optional feature.
 | `~` | Water | ✘ | ✔ | – |
 | ` ` | Void | ✘ | ✘ | – |
 | `#` | Wall | ✘ | ✘ | 40 |
-| `D` | Door (closed / open) | ✔ (+2 AP, opens) / ✔ | ✘ / ✔ | 20 |
+| `D` / `d` | Door, closed / open | ✔ (+2 AP, opens) / ✔ | ✘ / ✔ | 20 |
 | `C` | Crate | ✘ | ✘ | 15 |
 | `W` | Window | ✘ | ✔ | 1 |
 
@@ -119,7 +119,7 @@ Conditions are checked in the order the scenario lists them, after every command
 | --- | --- |
 | Single player vs AI (AI uses only its own view) | ✅ |
 | Local hotseat with an opaque hand-off screen | ✅ |
-| Boot Camp tutorial | 🟡 1 of 4–5 missions |
+| Boot Camp tutorial ([ADR 0009](docs/adr/0009-boot-camp-curriculum-and-coach-tips.md)) | ✅ 4 missions; 📋 a 5th for inventory and explosives |
 | Online / LAN / tunnel multiplayer | 📋 [ADR 0005](docs/adr/0005-network-topology.md) |
 | Scenario editor | 📋 |
 
@@ -130,13 +130,28 @@ Conditions are checked in the order the scenario lists them, after every command
   - mouse: hover previews, click confirms;
   - keyboard/gamepad: the cursor previews, confirm commits.
 - Previews show AP cost and AP left (moves), or hit % and AP cost (shots).
-- Tutorial prompts adapt to the last-used input device.
-- Players returning after **14+ days** get a refresher.
-- Coach hints (on by default) explain the reaction reserve.
+- Tutorial prompts adapt to the last-used input device (touch / mouse / keyboard / gamepad wording and key glyphs).
+- **Boot Camp** ([ADR 0009](docs/adr/0009-boot-camp-curriculum-and-coach-tips.md)): four short missions on the real rules.
+  - The curriculum:
+    1. **First Steps**: camera, select, AP, move, doors, fog, facing, firing.
+    2. **Cover & Fire**: physical shots, destroying cover, rubble, hit chance, Snap vs Aimed, range, Auto.
+    3. **Reaction Fire**: a scripted ambush and the enemy's reserve.
+    4. **Squad Tactics**: switching soldiers, roles, overwatch, flanking, focus fire.
+  - Progress is stored per mission, missions can be replayed, and winning one offers the next.
+  - Steps advance when the player actually does the thing. Information steps use Continue, and keyboard/gamepad confirm presses it.
+- **Tips & tricks:**
+  - 16 tips in How to play (searchable).
+  - A tip of the day in the main menu.
+  - 3 rotating tip cards in the refresher.
+- **Coach tips:** 9 situational toasts during non-tutorial games, e.g. hit chance < 30%, a path longer than your AP, reaction fire received or fired, a miss hitting cover, ending a turn with no snap reserve, a soldier below 40% HP. Each is shown **once per profile**. Coach mode is on by default and can be turned off from a toast or in the pause menu; Settings can reset tips.
+- The unit panel coach hint explains the snap-cost reserve.
+- Players returning after **14+ days** get a refresher: 5 rule cards plus 3 tips, with a shortcut to replay Boot Camp.
 
 ## 11. Scenarios
 
-Scenarios are versioned JSON (`squad-protocol/scenario` v1, zod schema in `packages/engine/src/scenario.ts`) with map rows, sides, units, victory conditions and per-locale strings. Shipped: `bootcamp1` (tutorial) and `kestrel` (4v4 compound assault).
+Scenarios are versioned JSON (`squad-protocol/scenario` v1, zod schema in `packages/engine/src/scenario.ts`) with map rows, sides, units, victory conditions and per-locale strings. Shipped:
+- `bootcamp1`–`bootcamp4` (tutorial; mission 3 uses a scripted opponent turn);
+- `kestrel` (4v4 compound assault).
 
 ## 12. Planned rules 📋
 

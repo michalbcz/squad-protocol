@@ -76,6 +76,7 @@ interface Session {
 - **`LocalSession`** ✅ handles hotseat and AI:
   - It chooses who controls each side (human or AI).
   - It runs AI turns on a timer.
+  - It can take an optional **`script`** (side → turn → commands) that runs before the regular AI on that turn; illegal steps are skipped. Tutorials use it ([ADR 0009](docs/adr/0009-boot-camp-curriculum-and-coach-tips.md)).
   - It queues a per-side **backlog** of events witnessed during other sides' turns.
   - Between two humans it emits `handoff`, then `viewer` once the next player confirms.
 - **`NetSession`** 📋 will implement the same interface over a `Transport`. It is asynchronous, so the UI must not assume `submit` delivers events synchronously.
@@ -85,15 +86,18 @@ interface Session {
 - **`GameController`** (`lib/controller.svelte.ts`) is the reactive UI state: selection, mode, cursor, preview, log, and the handoff/busy flags.
   - It turns taps, hovers and `Action`s into `Command`s.
   - It plays session updates through a serialized animation queue, with a pending counter driving `busy`.
-  - It emits `UiSignal`s for the tutorial.
+  - It emits `UiSignal`s (`selected`, `previewed`, `mode`, `command`, `rejected`, `events`, user-only `camera`, synthetic `check`). The tutorial and coach tips consume these.
 - **`Board`** (`render/board.ts`) is PixiJS 8. Layers are tiles → overlay (path/target/cursor) → units → fog → FX.
   - It handles pointer gestures: tap, drag-pan, pinch, wheel zoom and long-press.
   - It plays events through `play(events)`.
   - It draws **no text**: DOM tooltips are positioned with `tileToScreen`.
-- **Svelte screens** (`ui/`): `App` (router), `MainMenu`, `Game` (HUD, dialogs), `Tutorial`, `Codex`, `Refresher`, `Settings`.
+- **Svelte screens** (`ui/`): `App` (router; `?seed=N` makes games reproducible), `MainMenu` (with tip of the day), `BootCamp` (mission list and progress), `Game` (HUD, dialogs, mission completion), `Tutorial`, `CoachTips`, `Codex` (rules and tips, searchable), `Refresher`, `Settings`.
   - Dialog and tutorial primary buttons carry `data-primary`, so keyboard/gamepad `confirm` reaches them.
-- **Tutorial** (`tutorial/steps.ts`): data-driven steps (`textKey`, optional `highlight`/`tile`, `until(signal, ctrl)`) running on the real engine. Text keys resolve to `${key}.${device}` when such a variant exists.
-- **Settings** (`lib/settings.svelte.ts`): localStorage for locale, coach mode, last-played time (drives the refresher) and tutorial completion. 📋 Swap in a per-platform storage backend.
+- **Tutorial** (`tutorial/steps.ts`): `BOOT_CAMP` is a list of `TutorialMission`s (scenario id, steps, optional opponent script).
+  - Steps are data-driven (`textKey`, optional `highlight`/`tile`, `until(signal, ctrl)`) and run on the real engine.
+  - Text keys resolve to `${key}.${device}` when such a variant exists.
+- **Tips** (`tutorial/tips.ts`): `TIPS` (general tips for the codex, menu and refresher) and `COACH_TIPS` (contextual rules `when(signal, ctrl)`, each shown once per profile by `CoachTips` outside tutorials).
+- **Settings** (`lib/settings.svelte.ts`): localStorage for locale, coach mode, last-played time (drives the refresher), completed Boot Camp missions (`bootCamp`) and coach tips already shown (`seenTips`). The old `tutorialDone` flag is migrated on load. 📋 Swap in a per-platform storage backend.
 
 ## 7. Input (`packages/input`) ✅
 
@@ -138,7 +142,7 @@ Changing any versioned format requires a version bump, a migration path and an A
 | Gate | Command |
 | --- | --- |
 | Type-check (tsc + svelte-check) | `just typecheck` |
-| Unit tests: rules, LOS, redaction, determinism, AI-vs-AI legality, i18n coverage, bindings | `just test` |
-| E2E: tutorial (mouse + keyboard), hotseat opacity, touch tap-confirm, pseudo-locale, focus trap | `just e2e` |
+| Unit tests: rules, LOS, redaction, determinism, AI-vs-AI legality, i18n coverage, bindings, tutorial data and scripts (`packages/*/test`, `apps/*/test`) | `just test` |
+| E2E: Boot Camp (mouse + keyboard, mission list, scripted ambush), coach tips, codex tips, hotseat opacity, touch tap-confirm, pseudo-locale, focus trap | `just e2e` |
 | All of the above (also in CI, `.github/workflows/ci.yml`) | `just check` |
 | Balance report | `just balance` |
