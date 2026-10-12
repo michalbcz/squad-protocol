@@ -1,5 +1,6 @@
 import { createMemory, nextCommand, type AiMemory } from '@sp/ai';
 import { Match, type Command, type CommandResult, type GameEvent, type PlayerView, type Scenario, type SideId, type WeaponDef } from '@sp/engine';
+import type { ScenarioInfo, SubmitResult } from '@sp/net';
 
 /**
  * What the UI talks to. Local (hotseat/AI) and, later, network sessions implement this,
@@ -9,17 +10,21 @@ export interface Session {
   /** Side whose view is currently on screen. */
   readonly viewer: SideId;
   readonly view: PlayerView;
-  readonly scenario: Scenario;
-  submit(cmd: Command): CommandResult;
+  readonly scenario: ScenarioInfo;
+  readonly connection?: 'connected' | 'connecting' | 'reconnecting' | 'disconnected' | 'closed' | 'opponentDisconnected';
+  submit(cmd: Command): SubmitResult | Promise<SubmitResult>;
   /** Fired with the viewer's filtered events after each accepted command. */
   subscribe(fn: (u: SessionUpdate) => void): () => void;
   /** Hotseat: confirm the next player has the device. */
   acceptHandoff(): void;
+  humans?(): SideId[];
+  reconnect?(): void;
   dispose(): void;
 }
 
 export type SessionUpdate =
-  | { kind: 'events'; view: PlayerView; events: GameEvent[] }
+  | { kind: 'events'; view: PlayerView; events: GameEvent[]; command?: Command }
+  | { kind: 'connection'; status: NonNullable<Session['connection']> }
   /** Screen must be hidden until the named side takes the device. */
   | { kind: 'handoff'; to: SideId }
   /** New viewer takes over; `backlog` holds what they witnessed during others' turns. */

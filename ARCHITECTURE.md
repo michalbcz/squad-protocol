@@ -13,7 +13,7 @@ Status tags: ✅ implemented · 🟡 partial · 📋 planned
   mouse,    │               previews)          │          │ PlayerView + redacted events     │
   keys,pad) └──────────────────────────────────┼──────────┼──────────────────────────────────┘
                                                ▼          │
-                              LocalSession ✅ / NetSession 📋 (Transport: WS · WebRTC · loopback)
+                              LocalSession ✅ / NetSession ✅ (Transport: WS ✅ · WebRTC/loopback 📋)
                                                │          │
                                                ▼          │
                                      Match (authority) ───┘  ◀── @sp/ai (plays from its view only)
@@ -34,9 +34,9 @@ Key ideas:
 | `packages/content` | ✅ | Weapons, scenario JSON (validated at import) | engine |
 | `packages/i18n` | ✅ | ICU MessageFormat runtime, `en`/`cs` catalogs, `en-XA` pseudo-locale, RTL detection, locale negotiation | `intl-messageformat` |
 | `packages/input` | ✅ | Semantic `Action`s, key bindings (`KeyboardEvent.code`), gamepad polling, device tracking, focus handling | – (DOM types) |
-| `packages/net` | 📋 | `Transport` interface, WS / WebRTC / loopback, protocol, lobby | engine |
+| `packages/net` | ✅ | Protocol v1, strict client schemas, Transport/WebSocketTransport, MultiplayerClient; 📋 WebRTC/loopback | engine, zod |
 | `apps/web` | ✅ | Svelte UI, Pixi renderer, sessions, tutorial, settings | all packages, `pixi.js`, `svelte` |
-| `apps/host` | 📋 | Headless Node host: WS server, mDNS, serves the web build | engine, net |
+| `apps/host` | ✅ | Node HTTP/WS host, bounded rooms, private seats, heartbeat, static web build; 📋 mDNS | engine, content, net, ws |
 | `apps/desktop` | 📋 | Tauri 2 (Win/macOS/Linux/Steam), host + cloudflared sidecars | web build |
 | `apps/mobile` | 📋 | Capacitor (Android/iOS), join-only | web build |
 | `e2e/` | ✅ | Playwright tests (desktop + mobile-touch projects) | – |
@@ -56,7 +56,7 @@ Key ideas:
 
 ## 4. Trust model & information flow ✅
 
-- Only the authority (`Match`, inside `LocalSession` today and a host process later) sees `GameState`.
+- Only the authority (`Match`, inside `LocalSession` or the Node host) sees `GameState`.
 - `viewFor(state, side)` returns own units, visible enemies (AP zeroed), per-tile visibility and the public map.
 - `eventsFor` drops unwitnessed events and redacts hidden origins, ids and destinations.
 - Commands entering a session are deep-copied as JSON, exactly like a network wire, and UI code snapshots `$state` proxies before sending.
@@ -66,9 +66,9 @@ Key ideas:
 
 ```ts
 interface Session {
-  viewer: SideId; view: PlayerView; scenario: Scenario;
-  submit(cmd): CommandResult;
-  subscribe(fn: (u: SessionUpdate) => void): () => void;  // events | handoff | viewer
+  viewer: SideId; view: PlayerView; scenario: ScenarioInfo;
+  submit(cmd): SubmitResult | Promise<SubmitResult>;
+  subscribe(fn: (u: SessionUpdate) => void): () => void;  // events | handoff | viewer | connection
   acceptHandoff(): void; dispose(): void;
 }
 ```
@@ -79,7 +79,8 @@ interface Session {
   - It can take an optional **`script`** (side → turn → commands) that runs before the regular AI on that turn; illegal steps are skipped. Tutorials use it ([ADR 0009](docs/adr/0009-boot-camp-curriculum-and-coach-tips.md)).
   - It queues a per-side **backlog** of events witnessed during other sides' turns.
   - Between two humans it emits `handoff`, then `viewer` once the next player confirms.
-- **`NetSession`** 📋 will implement the same interface over a `Transport`. It is asynchronous, so the UI must not assume `submit` delivers events synchronously.
+- **`NetSession`** ✅ adapts MultiplayerClient/Transport to Session. It stores only PlayerView and public scenario metadata, publishes filtered events and connection status, and returns asynchronous acknowledgements. The controller correlates commands and locks input until acknowledgement and animation both finish.
+- The private version-1 sp.multiplayer sessionStorage credential enables same-tab refresh/reconnect; invalid records are ignored. Disconnects reject pending requests and recover snapshots instead of replaying commands. Explicit leave closes the room; transport loss reserves the seat.
 
 ## 6. Client (`apps/web`) ✅
 
@@ -92,7 +93,7 @@ interface Session {
   - It handles pointer gestures: tap, drag-pan, pinch, wheel zoom and long-press.
   - It plays events through `play(events)`.
   - It draws **no text**: DOM tooltips are positioned with `tileToScreen`.
-- **Svelte screens** (`ui/`): `App` (router; `?seed=N` makes games reproducible), `MainMenu` (with tip of the day), `BootCamp` (mission list and progress), `Game` (HUD, dialogs, mission completion), `Tutorial`, `CoachTips`, `Codex` (rules and tips, searchable), `Refresher`, `Settings`.
+- **Svelte screens** (`ui/`): `App` (router; `?seed=N` makes local games reproducible, `?room=CODE` opens an invite), `MainMenu`, `Multiplayer` (create/join/start and recovery) (with tip of the day), `BootCamp` (mission list and progress), `Game` (HUD, dialogs, mission completion), `Tutorial`, `CoachTips`, `Codex` (rules and tips, searchable), `Refresher`, `Settings`.
   - Dialog and tutorial primary buttons carry `data-primary`, so keyboard/gamepad `confirm` reaches them.
 - **Presentation:** shared black/saturated-color tokens in `ui/global.css`; the locally hosted VT323 font and its OFL license live in `public/fonts/`. The responsive HUD remains DOM-based ([ADR 0010](docs/adr/0010-use-an-original-8-bit-tactical-presentation.md)).
 - **Tutorial** (`tutorial/steps.ts`): `BOOT_CAMP` is a list of `TutorialMission`s (scenario id, steps, optional opponent script).
@@ -123,16 +124,18 @@ interface Session {
 | Scenario `squad-protocol/scenario` | 1 | `packages/engine/src/scenario.ts` (zod) |
 | Replay `squad-protocol/replay` | 1 | `packages/engine/src/match.ts` (scenario + weapons + seed + commands) |
 | Settings / bindings | unversioned | localStorage `sp.settings`, `sp.bindings` |
-| Net protocol | 📋 | `packages/net` |
+| Net protocol `version` | 1 | packages/net/src/protocol.ts; initial format, unsupported versions rejected |
+| Private multiplayer credential | 1 | sessionStorage sp.multiplayer: host, room, token; invalid records ignored |
 
 Changing any versioned format requires a version bump, a migration path and an ADR.
 
-## 10. Networking 📋 ([ADR 0005](docs/adr/0005-network-topology.md))
+## 10. Networking 🟡 ([ADR 0011](docs/adr/0011-ship-versioned-websocket-rooms-with-private-seats.md), [ADR 0005](docs/adr/0005-network-topology.md))
 
-- There is one `Transport` interface (WebSocket, WebRTC DataChannel, loopback).
-- LAN hosting (mDNS `_squadproto._tcp`) and Cloudflare quick tunnels run in `apps/host` or the Tauri sidecar.
-- Browser-only P2P uses WebRTC with manual or QR signaling.
-- Mobile is join-only.
+- `just host [port]` builds and serves the web client plus /ws on one Node origin. The CLI prints localhost and LAN addresses; browser origins must match the host. Selecting a different host in the lobby opens its own page first. HTTP becomes WS; HTTPS becomes WSS, including manual HTTP tunnels.
+- Rooms contain two seats, private random tokens, per-seat result caches and an authoritative Match after the creator starts. Socket bindings enforce command identity; revisions reject stale commands. No raw success result, full scenario, RNG state or replay crosses the wire. Metadata contains id/title/briefing/translations only.
+- Commands pause when either side disconnects. The client retries five times, then exposes manual retry; same-tab reload resumes its seat. Leaving closes the room for both clients. The latest 128 request results per seat are cached; old repeated commands also fail revision checks.
+- Limits: 64 KiB frames, 100 rooms, 256 sockets, 120 messages/minute/socket, 1 MiB outgoing backlog. A 15-second ping loop detects dead peers; rooms expire after 30 minutes without connected seats. State is in memory; host restarts end matches.
+- 📋 mDNS, automatic cloudflared/QR, WebRTC/manual signaling, loopback transport, desktop sidecars and mobile wrappers. Mobile browsers can join today.
 
 ## 11. Platforms 📋
 
@@ -144,7 +147,7 @@ Changing any versioned format requires a version bump, a migration path and an A
 | Gate | Command |
 | --- | --- |
 | Type-check (tsc + svelte-check) | `just typecheck` |
-| Unit tests: rules, LOS, redaction, determinism, AI-vs-AI legality, i18n coverage, bindings, tutorial data and scripts (`packages/*/test`, `apps/*/test`) | `just test` |
-| E2E: Boot Camp (mouse + keyboard, mission list, scripted ambush), coach tips, codex tips, hotseat opacity, touch tap-confirm, pseudo-locale, focus trap | `just e2e` |
+| Unit tests: rules, LOS, redaction, determinism, AI-vs-AI legality, i18n coverage, bindings, tutorial data/scripts, protocol validation and real WebSocket room/client/privacy tests (`packages/*/test`, `apps/*/test`) | `just test` |
+| E2E: Boot Camp (mouse + keyboard, mission list, scripted ambush), coach tips, codex tips, hotseat opacity, touch tap-confirm, pseudo-locale, focus trap, two-browser multiplayer (desktop/touch), reload recovery, LAN HTTP crypto, host navigation | `just e2e` |
 | All of the above (also in CI, `.github/workflows/ci.yml`) | `just check` |
 | Balance report | `just balance` |

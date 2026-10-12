@@ -48,6 +48,10 @@ dev:
 run: build
     pnpm --filter {{web}} preview --port 4173
 
+# Build and host two-player rooms; open a printed LAN URL on both devices
+host port="8080": build
+    PORT={{port}} pnpm --filter @sp/host start
+
 # Production build of the web app (apps/web/dist)
 build:
     pnpm --filter {{web}} build

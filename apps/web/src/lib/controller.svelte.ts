@@ -18,6 +18,7 @@ import {
 import type { Action } from '@sp/input';
 import type { Board } from '../render/board';
 import type { Session, SessionUpdate } from './session';
+import type { SubmitError, SubmitResult } from '@sp/net';
 
 export type Mode = 'move' | FireMode;
 
@@ -32,7 +33,7 @@ export type UiSignal =
   | { type: 'previewed'; preview: Preview }
   | { type: 'mode'; mode: Mode }
   | { type: 'command'; command: Command; events: GameEvent[] }
-  | { type: 'rejected'; error: CommandError }
+  | { type: 'rejected'; error: SubmitError }
   /** Events the viewer witnessed (own actions, enemy turns, hotseat backlog). */
   | { type: 'events'; events: GameEvent[] }
   /** The player panned or zoomed the camera. */
@@ -58,6 +59,7 @@ export class GameController {
   cursor = $state<Vec | null>(null);
   preview = $state<Preview | null>(null);
   busy = $state(false);
+  connection = $state<NonNullable<Session['connection']>>('connected');
   handoffTo = $state<string | null>(null);
   log = $state<LogEntry[]>([]);
   inspect = $state<Unit | null>(null);
@@ -70,6 +72,8 @@ export class GameController {
   private signals = new Set<(s: UiSignal) => void>();
   private queue: Promise<void> = Promise.resolve();
   private pending = 0;
+  private commandPending = false;
+  private disposed = false;
   private unsub: () => void;
 
   constructor(
@@ -77,11 +81,13 @@ export class GameController {
     private board: Board,
   ) {
     this.view = session.view;
+    this.connection = session.connection ?? 'connected';
     this.autoSelect();
     this.unsub = session.subscribe((u) => this.onUpdate(u));
   }
 
   dispose(): void {
+    this.disposed = true;
     this.unsub();
   }
 
@@ -90,7 +96,7 @@ export class GameController {
   }
 
   get myTurn(): boolean {
-    return this.view.activeSide === this.view.side && !this.view.over && !this.handoffTo;
+    return this.connection === 'connected' && this.view.activeSide === this.view.side && !this.view.over && !this.handoffTo;
   }
 
   get ownUnits(): Unit[] {
@@ -255,16 +261,28 @@ export class GameController {
   }
 
   private send(raw: Command): void {
+    if (!this.myTurn || this.busy) return;
     // Commands must be plain data: never let reactive proxies reach the engine.
     const cmd = $state.snapshot(raw) as Command;
     this.sent = cmd;
     const r = this.session.submit(cmd);
     this.sent = null;
-    if (!r.ok) this.reject(r.error);
+    if (r instanceof Promise) {
+      this.commandPending = true;
+      this.busy = true;
+      void r.then((result) => this.finishCommand(result), () => this.finishCommand({ ok: false, error: 'disconnected' }));
+    } else if (!r.ok) this.reject(r.error);
     // Successful results arrive through the session subscription.
   }
 
-  private reject(error: CommandError): void {
+  private finishCommand(result: SubmitResult): void {
+    if (this.disposed) return;
+    this.commandPending = false;
+    this.busy = this.pending > 0;
+    if (!result.ok) this.reject(result.error);
+  }
+
+  private reject(error: SubmitError): void {
     this.pushLog(`error.${error}`, {});
     this.emit({ type: 'rejected', error });
   }
@@ -314,7 +332,8 @@ export class GameController {
   // ---- session updates ------------------------------------------------------
 
   private onUpdate(u: SessionUpdate): void {
-    const cmd = u.kind === 'events' ? this.sent : null;
+    if (u.kind === 'connection') { this.connection = u.status; return; }
+    const cmd = u.kind === 'events' ? u.command ?? this.sent : null;
     // Lock input synchronously; animations are serialized so rapid AI turns play in order.
     if (u.kind !== 'handoff') {
       this.pending++;
@@ -355,7 +374,7 @@ export class GameController {
         if (this.cursor && this.myTurn) this.previewAt(this.cursor);
       }
       this.pending--;
-      this.busy = this.pending > 0;
+      this.busy = this.pending > 0 || this.commandPending;
       this.sync();
     });
   }
