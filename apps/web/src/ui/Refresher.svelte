@@ -44,7 +44,7 @@
   .kicker { margin: 0; color: var(--warn); font-size: 0.85rem; }
   .body { white-space: pre-line; line-height: 1.5; min-height: 6em; margin: 0; }
   .dots { display: flex; gap: 6px; justify-content: center; }
-  .dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+  .dots span { width: 8px; height: 8px; border-radius: 0; background: var(--line); }
   .dots span.on { background: var(--accent); }
   .row { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
 </style>

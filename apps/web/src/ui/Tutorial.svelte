@@ -83,14 +83,14 @@
     padding: 12px 16px;
     z-index: 5;
     border-color: var(--accent);
-    box-shadow: 0 0 24px rgb(74 163 255 / 0.25);
+    box-shadow: 6px 6px 0 #000;
   }
   :global([dir='rtl']) .tutorial { transform: translateX(50%); }
   p { margin: 6px 0 10px; line-height: 1.4; }
   .progress { font-size: 0.75rem; }
   .row { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
   .waiting { flex: 1; font-size: 0.85rem; }
-  .reopen { position: absolute; inset-block-start: 70px; inset-inline-start: 50%; z-index: 5; border-radius: 50%; }
+  .reopen { position: absolute; inset-block-start: 70px; inset-inline-start: 50%; z-index: 5; border-radius: 0; }
   :global([data-tut-active]) {
     outline: 3px solid var(--warn) !important;
     outline-offset: 3px;
@@ -110,11 +110,25 @@
       font-size: 0.8rem;
     }
     :global([dir='rtl']) .tutorial { transform: none; }
-    p { margin: 4px 0 6px; line-height: 1.3; }
-    .row button { min-height: 36px; }
+    p { margin: 4px 0 6px; line-height: 1.15; }
+    .row button { min-height: var(--hit); }
     .reopen { inset-block-start: 52px; inset-inline: auto max(8px, env(safe-area-inset-right)); }
   }
   @media (prefers-reduced-motion: reduce) {
     :global([data-tut-active]) { animation: none; }
+  }
+  @media (min-width: 1000px) and (min-height: 700px) {
+    .tutorial {
+      inset-inline: auto 8px;
+      inset-block-start: 390px;
+      transform: none;
+      width: 276px;
+      max-height: calc(100% - 490px);
+      overflow-y: auto;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+    }
+    :global([dir='rtl']) .tutorial { transform: none; }
+    p { line-height: 1.15; }
   }
 </style>

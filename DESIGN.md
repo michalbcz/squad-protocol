@@ -147,6 +147,12 @@ Conditions are checked in the order the scenario lists them, after every command
 - The unit panel coach hint explains the snap-cost reserve.
 - Players returning after **14+ days** get a refresher: 5 rule cards plus 3 tips, with a shortcut to replay Boot Camp.
 
+### Visual presentation
+
+Original 8-bit artwork and a black, saturated-color HUD ([ADR 0010](docs/adr/0010-use-an-original-8-bit-tactical-presentation.md)). Terrain uses distinct pixel patterns; soldiers use helmet-and-rifle silhouettes. Cyan identifies Blue Squad, red identifies Red Cell, and yellow brackets mark the selected soldier. A white compass pip shows facing; HP strips and friendly AP pips supplement the DOM statistics.
+
+Desktop screens (at least 1000 × 521 CSS pixels) put unit details and the combat log on the right. Smaller screens use compact overlays, with unit statistics in a full-width strip above the actions on portrait phones. On desktop screens at least 700 pixels tall, tutorial prompts occupy the right sidebar in place of the combat log, leaving the battlefield unobstructed. Controls retain at least 44-pixel hit targets. Automatic camera framing avoids empty margins when the map exceeds the viewport and centers a map that fits, reserving space for the turn strip. Resizing refits the map and keeps the selected soldier in view. Manual pan and zoom remain available.
+
 ## 11. Scenarios
 
 Scenarios are versioned JSON (`squad-protocol/scenario` v1, zod schema in `packages/engine/src/scenario.ts`) with map rows, sides, units, victory conditions and per-locale strings. Shipped:

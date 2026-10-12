@@ -121,8 +121,8 @@
         <span class="muted">{weapon ? t(weapon.nameKey) : ''}</span>
       </div>
       <div class="bars">
-        <div class="bar"><span>{t('hud.ap')}</span><meter min="0" max={sel.maxAp} value={sel.ap}></meter><span>{sel.ap}/{sel.maxAp}</span></div>
-        <div class="bar"><span>{t('hud.hp')}</span><meter min="0" max={sel.maxHp} low={sel.maxHp * 0.3} high={sel.maxHp * 0.6} optimum={sel.maxHp} value={sel.hp}></meter><span>{sel.hp}/{sel.maxHp}</span></div>
+        <div class="bar"><span>{t('hud.ap')}</span><meter aria-label={t('hud.ap')} min="0" max={sel.maxAp} value={sel.ap}></meter><span>{sel.ap}/{sel.maxAp}</span></div>
+        <div class="bar"><span>{t('hud.hp')}</span><meter aria-label={t('hud.hp')} min="0" max={sel.maxHp} low={sel.maxHp * 0.3} high={sel.maxHp * 0.6} optimum={sel.maxHp} value={sel.hp}></meter><span>{sel.hp}/{sel.maxHp}</span></div>
       </div>
       {#if settings.coach && weapon}
         <p class="coach muted">{t('coach.reserve', { cost: weapon.ap.snap ?? 0 })}</p>
@@ -240,7 +240,8 @@
 
 <style>
   .game { position: relative; height: 100%; overflow: hidden; user-select: none; }
-  .board { position: absolute; inset: 0; }
+  .game::after { content: ''; position: absolute; inset: 0; border: 6px double var(--warn); pointer-events: none; z-index: 6; }
+  .board { position: absolute; inset: 0; inset-block-end: 132px; }
   .top {
     position: absolute;
     inset-block-start: max(8px, env(safe-area-inset-top));
@@ -259,10 +260,19 @@
     padding: 10px 12px;
     width: min(280px, 46vw);
   }
-  .name { display: flex; flex-direction: column; }
+  .name { display: flex; flex-direction: column; gap: 4px; }
+  .name strong { color: var(--warn); font-size: 1.6rem; text-transform: uppercase; line-height: 0.9; }
+  .name .muted { color: var(--accent); }
   .bars { display: grid; gap: 4px; margin-top: 6px; }
   .bar { display: grid; grid-template-columns: 2.5em 1fr auto; gap: 6px; align-items: center; font-size: 0.85rem; }
-  meter { width: 100%; }
+  meter { width: 100%; height: 12px; border: 1px solid var(--good); background: #000; border-radius: 0; }
+  meter::-webkit-meter-bar { background: #000; border: 0; border-radius: 0; }
+  meter::-webkit-meter-optimum-value { background: var(--good); }
+  meter::-webkit-meter-suboptimum-value { background: var(--warn); }
+  meter::-webkit-meter-even-less-good-value { background: var(--bad); }
+  meter::-moz-meter-bar { background: var(--good); }
+  .bar > span:first-child { color: var(--good); }
+  .bar > span:last-child { color: var(--warn); }
   .coach { font-size: 0.75rem; margin: 6px 0 0; }
   .actions {
     position: absolute;
@@ -281,7 +291,7 @@
     transform: translate(-50%, calc(-100% - 8px));
     background: var(--panel-solid);
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: 0;
     padding: 4px 8px;
     font-size: 0.85rem;
     pointer-events: none;
@@ -303,27 +313,53 @@
     text-align: end;
     pointer-events: none;
   }
-  .log li { background: rgb(0 0 0 / 0.5); padding: 2px 6px; border-radius: 4px; margin-bottom: 2px; }
+  .log li { background: #000; color: var(--good); padding: 2px 6px; border-radius: 0; margin-bottom: 2px; }
   .inspect { position: absolute; inset-block-end: 90px; inset-inline-start: 50%; transform: translateX(-50%); padding: 10px; }
-  .cover { position: absolute; inset: 0; background: rgb(5 8 12 / 0.92); display: grid; place-items: center; z-index: 10; }
+  .cover { position: absolute; inset: 0; background: rgb(0 0 0 / 0.92); display: grid; place-items: center; z-index: 10; }
   /* Hotseat: nothing of the previous player's board may show through. */
   .cover.opaque { background: var(--bg); }
   .card { padding: 24px; max-width: min(480px, 92vw); text-align: center; display: grid; gap: 12px; }
   .row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
   .controls { text-align: start; white-space: pre-line; padding-inline-start: 1em; }
   .group small { margin-inline-start: 4px; color: var(--muted); }
+  .group button.active small { color: #000; }
+  @media (min-width: 1000px) and (min-height: 700px) {
+    .game:has(:global(.tutorial)) .log { display: none; }
+  }
+  @media (min-width: 1000px) and (min-height: 521px) {
+    .board { inset-inline-end: 292px; inset-block-end: 84px; }
+    .unit { inset-inline: auto 8px; inset-block-start: 76px; width: 276px; padding: 18px 14px; border-inline: 0; border-block: 3px solid var(--warn); }
+    .name strong { font-size: 2.2rem; }
+    .bars { margin-top: 20px; gap: 12px; }
+    .bar { grid-template-columns: 1.5em 1fr auto; font-size: 1rem; }
+    .coach { font-size: 0.9rem; margin-top: 18px; }
+    .log { inset-inline-end: 14px; inset-block-start: 370px; width: 264px; max-width: none; text-align: start; font-size: 0.9rem; }
+    .log li { padding: 6px 0; border-bottom: 1px solid #555; }
+  }
   /* Landscape phones: keep the board visible. */
   @media (max-height: 520px) {
     .top { padding: 2px 6px; font-size: 0.85rem; }
-    .top button { min-height: 36px; min-width: 36px; }
+    .top button { min-height: var(--hit); min-width: var(--hit); }
     .unit { inset-block-start: 52px; width: 190px; padding: 6px 8px; font-size: 0.8rem; }
     .coach { display: none; }
     .log { inset-block-start: 52px; }
     .actions { padding: 4px; gap: 4px; }
     .actions button { padding-inline: 10px; }
+    .name strong { font-size: 1.1rem; }
+    .group { gap: 3px; }
   }
   @media (max-width: 640px) {
-    .unit { inset-block-start: auto; inset-block-end: 150px; }
+    .game { font-size: 0.85rem; }
+    .board { inset-block-end: 240px; }
+    .unit { inset-block-start: auto; inset-block-end: 136px; inset-inline: 8px; width: auto; padding: 8px; }
+    .name { flex-direction: row; align-items: baseline; gap: 12px; }
+    .name strong { font-size: 1.1rem; }
+    .bars { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .bar { grid-template-columns: 1.5em 1fr auto; font-size: 0.8rem; }
+    .coach { display: none; }
+    .actions { gap: 4px; padding: 4px; }
+    .actions button { padding-inline: 6px; }
+    .actions :global(kbd) { display: none; }
     .log { display: none; }
   }
 </style>

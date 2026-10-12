@@ -49,15 +49,16 @@
     height: 100%;
     display: grid;
     place-content: center;
-    gap: 24px;
+    gap: 16px;
     padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-    background: radial-gradient(ellipse at 30% 20%, #16263d 0%, var(--bg) 60%);
+    background: radial-gradient(#006600 1px, transparent 1px) 0 0 / 12px 12px, #000;
+    border: 6px double var(--warn);
     overflow-y: auto;
   }
-  header { text-align: center; }
-  h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.5rem); letter-spacing: 0.08em; text-transform: uppercase; }
-  nav { display: flex; flex-direction: column; gap: 10px; padding: 16px; width: min(420px, 92vw); }
-  nav > button { display: flex; flex-direction: column; align-items: flex-start; padding-block: 10px; text-align: start; }
+  header { text-align: center; background: #000; padding: 12px; border-block: 3px solid var(--warn); }
+  h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.5rem); letter-spacing: 0.04em; text-transform: uppercase; }
+  nav { display: flex; flex-direction: column; gap: 8px; padding: 12px; width: min(500px, 92vw); max-width: 100%; }
+  nav > button { display: flex; flex-direction: column; align-items: flex-start; padding-block: 6px; text-align: start; }
   .sub { font-size: 0.8rem; color: var(--muted); }
   .row { display: flex; gap: 8px; flex-wrap: wrap; }
   .row button { flex: 1; }

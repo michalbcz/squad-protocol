@@ -50,8 +50,8 @@ test('boot camp tutorial advances as the player acts (mouse)', async ({ page, is
   const room = await tilePoint(page, { x: 7, y: 3 });
   await page.mouse.click(room.x, room.y);
   await idle(page);
-  await expect(tut).toContainText('Darkened tiles');
   await page.screenshot({ path: 'test-results/bootcamp-desktop.png' });
+  await expect(tut).toContainText('Darkened tiles');
 });
 
 test('keyboard-only: select, move, end turn', async ({ page, isMobile }) => {
@@ -85,12 +85,35 @@ test('hotseat hides the board between turns', async ({ page }) => {
   const cover = page.getByRole('dialog');
   await expect(cover).toContainText('Pass the device to Red Cell');
   // The cover must be fully opaque: no pixels of Blue's board may show through.
-  await expect(cover).toHaveCSS('background-color', 'rgb(13, 17, 23)');
+  await expect(cover).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await page.screenshot({ path: `test-results/handoff-${test.info().project.name}.png` });
   await cover.getByRole('button', { name: /ready/ }).click();
   await expect(page.locator('.turn')).toContainText('Red Cell');
   await idle(page);
   expect((await ctrlState(page)).selected).toMatch(/^r/);
+});
+
+test('desktop opening view keeps the whole map between the HUD panels', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop overview');
+  await page.goto('/?e2e');
+  await page.getByRole('button', { name: /Skirmish/ }).click();
+  await idle(page);
+  await expect(page.locator('canvas')).toBeVisible();
+  await page.waitForFunction(() => (window as any).__sp.board.ready);
+  const bounds = await page.evaluate(() => {
+    const { board, ctrl } = (window as any).__sp;
+    const first = board.tileToScreen({ x: 0, y: 0 });
+    const last = board.tileToScreen({ x: ctrl.view.map.width - 1, y: ctrl.view.map.height - 1 });
+    return { left: first.x - 24 * board.zoom, top: first.y, right: last.x + 24 * board.zoom, bottom: last.y + 48 * board.zoom };
+  });
+  const unit = (await page.locator('.unit').boundingBox())!;
+  const top = (await page.locator('.top').boundingBox())!;
+  const actions = (await page.locator('.actions').boundingBox())!;
+  expect(bounds.left).toBeGreaterThanOrEqual(6);
+  expect(bounds.top).toBeGreaterThanOrEqual(top.y + top.height);
+  expect(bounds.right).toBeLessThan(unit.x);
+  expect(bounds.bottom).toBeLessThan(actions.y);
+  await page.screenshot({ path: 'test-results/retro-desktop.png' });
 });
 
 test('touch: tap previews, second tap confirms', async ({ page, isMobile }) => {
@@ -108,6 +131,31 @@ test('touch: tap previews, second tap confirms', async ({ page, isMobile }) => {
   await idle(page);
   expect((await ctrlState(page)).pos).toEqual(dest);
   await page.screenshot({ path: 'test-results/skirmish-mobile.png' });
+});
+
+test('resizing to portrait keeps the selected soldier visible above the compact HUD', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop to phone resize');
+  await page.goto('/?e2e');
+  await page.getByRole('button', { name: /Skirmish/ }).click();
+  await idle(page);
+  await page.waitForFunction(() => (window as any).__sp.board.ready);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => {
+    const { board, ctrl } = (window as any).__sp;
+    const p = board.tileToScreen(ctrl.selected.pos);
+    const canvas = document.querySelector('canvas')!.getBoundingClientRect();
+    const top = document.querySelector('.top')!.getBoundingClientRect();
+    const host = document.querySelector('.board')!.getBoundingClientRect();
+    if (canvas.width !== host.width || canvas.height !== host.height) return false;
+    return p.x > 0 && p.x < canvas.width && p.y > top.bottom && p.y + 48 * board.zoom < canvas.height;
+  })).toBe(true);
+  const unit = (await page.locator('.unit').boundingBox())!;
+  const canvas = (await page.locator('canvas').boundingBox())!;
+  const actions = (await page.locator('.actions').boundingBox())!;
+  expect(unit.y).toBeGreaterThanOrEqual(canvas.y + canvas.height);
+  expect(unit.y + unit.height).toBeLessThan(actions.y);
+  await expect(page.getByRole('button', { name: /End turn/ })).toBeInViewport();
+  await page.screenshot({ path: 'test-results/retro-portrait.png' });
 });
 
 test('keyboard-only boot camp, then Esc to pause and back to the main menu', async ({ page, isMobile }) => {
