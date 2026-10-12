@@ -27,13 +27,18 @@ test('boot camp tutorial advances as the player acts (mouse)', async ({ page, is
   test.skip(isMobile, 'mouse flow');
   await page.goto('/?e2e');
   await page.getByRole('button', { name: /Boot Camp/ }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
   const tut = page.getByRole('complementary', { name: 'Tutorial' });
   await expect(tut).toContainText('Welcome to Boot Camp');
   await tut.getByRole('button', { name: 'Continue' }).click();
+  await expect(tut).toContainText('mouse wheel');
+  const box = (await page.locator('canvas').boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.wheel(0, -200);
   await expect(tut).toContainText('Click your soldier');
   const vega = await tilePoint(page, { x: 3, y: 7 });
   await page.mouse.click(vega.x, vega.y);
-  await expect(tut).toContainText('Step 3');
+  await expect(tut).toContainText('Step 4');
   await tut.getByRole('button', { name: 'Continue' }).click();
   const target = await tilePoint(page, { x: 7, y: 6 });
   await page.mouse.move(target.x, target.y);
@@ -110,13 +115,17 @@ test('keyboard-only boot camp, then Esc to pause and back to the main menu', asy
   await page.goto('/?e2e');
   await page.getByRole('button', { name: /Boot Camp/ }).focus();
   await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: 'Start' })).toBeFocused();
+  await page.keyboard.press('Enter');
   const tut = page.getByRole('complementary', { name: 'Tutorial' });
   await expect(tut).toContainText('Welcome to Boot Camp');
   await idle(page);
   await page.keyboard.press('Enter'); // Continue
+  await expect(tut).toContainText('press + or −');
+  await page.keyboard.press('Equal');
   await expect(tut).toContainText('Press Tab');
   await page.keyboard.press('Tab');
-  await expect(tut).toContainText('Step 3');
+  await expect(tut).toContainText('Step 4');
   await page.keyboard.press('Enter'); // Continue
   await expect(tut).toContainText('arrow keys');
   for (const k of ['ArrowRight', 'ArrowRight', 'ArrowRight', 'ArrowRight', 'ArrowUp']) await page.keyboard.press(k);
@@ -129,7 +138,7 @@ test('keyboard-only boot camp, then Esc to pause and back to the main menu', asy
   await expect(pause).toContainText('Paused');
   await page.keyboard.press('Tab');
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('heading', { name: 'Squad Protocol' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Boot Camp', exact: true })).toBeVisible();
 });
 
 test('mouse-clicked HUD buttons do not swallow later keyboard confirm', async ({ page, isMobile }) => {
@@ -144,4 +153,61 @@ test('mouse-clicked HUD buttons do not swallow later keyboard confirm', async ({
   await page.keyboard.press('Enter');
   await idle(page);
   expect((await ctrlState(page)).pos).toEqual({ x: before.pos!.x, y: before.pos!.y - 1 });
+});
+
+test('boot camp lists four missions and remembers progress', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sp.settings', JSON.stringify({ bootCamp: ['firstSteps'] })));
+  await page.goto('/?e2e');
+  await expect(page.getByRole('button', { name: /Boot Camp/ })).toContainText('1 of 4');
+  await page.getByRole('button', { name: /Boot Camp/ }).click();
+  const missions = page.locator('.missions li');
+  await expect(missions).toHaveCount(4);
+  await expect(missions.nth(0)).toContainText('✓');
+  await expect(missions.nth(0).getByRole('button')).toHaveText('Replay');
+  await expect(missions.nth(1).getByRole('button')).toHaveText('Start');
+  await expect(missions.nth(1)).toContainText('Cover & Fire');
+});
+
+test('reaction fire mission: face the door, end turn, watch the scripted ambush', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'keyboard flow');
+  await page.goto('/?e2e&seed=4');
+  await page.getByRole('button', { name: /Boot Camp/ }).click();
+  await page.locator('.missions li').nth(2).getByRole('button').click();
+  const tut = page.getByRole('complementary', { name: 'Tutorial' });
+  await expect(tut).toContainText('AP you don’t spend is not wasted');
+  await idle(page);
+  await page.keyboard.press('Enter');
+  await expect(tut).toContainText('face east');
+  for (let i = 0; i < 4; i++) {
+    await page.keyboard.press('KeyR');
+    await idle(page);
+  }
+  await expect(tut).toContainText('end your turn');
+  await page.keyboard.press('KeyE');
+  await expect(tut).toContainText('Did you see a yellow tracer', { timeout: 20_000 });
+  await expect(page.locator('.turn')).toContainText('Turn 2');
+});
+
+test('codex has a tips & tricks section and the menu shows a tip of the day', async ({ page }) => {
+  await page.goto('/?e2e');
+  await expect(page.getByRole('complementary', { name: 'Tip of the day' })).toBeVisible();
+  await page.getByRole('button', { name: 'How to play' }).click();
+  await expect(page.getByRole('heading', { name: /Tips & tricks/ })).toBeVisible();
+  await page.getByRole('searchbox').fill('reserve');
+  await expect(page.getByRole('heading', { name: 'Always keep a reserve' })).toBeVisible();
+});
+
+test('coach tip appears once in a skirmish and can be dismissed', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'mouse hover flow');
+  await page.goto('/?e2e');
+  await page.getByRole('button', { name: /Skirmish/ }).click();
+  await idle(page);
+  const far = await tilePoint(page, { x: 26, y: 1 });
+  await page.mouse.move(far.x, far.y);
+  const coach = page.locator('.coach-tip');
+  await expect(coach).toContainText('Red dots');
+  await coach.getByRole('button', { name: 'Got it' }).click();
+  await expect(coach).toBeHidden();
+  const seen = await page.evaluate(() => JSON.parse(localStorage.getItem('sp.settings')!).seenTips);
+  expect(seen).toContain('tooFar');
 });
