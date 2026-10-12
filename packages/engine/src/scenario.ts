@@ -10,6 +10,7 @@ export const LEGEND: Record<string, Tile> = {
   ' ': { terrain: 'void' },
   '#': { terrain: 'floor', feature: 'wall', featureHp: 40 },
   'D': { terrain: 'floor', feature: 'door', featureHp: 20, doorOpen: false },
+  'd': { terrain: 'floor', feature: 'door', featureHp: 20, doorOpen: true },
   'C': { terrain: 'floor', feature: 'crate', featureHp: 15 },
   'W': { terrain: 'floor', feature: 'window', featureHp: 1 },
 };

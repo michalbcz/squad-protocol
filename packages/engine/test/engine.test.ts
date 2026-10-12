@@ -31,6 +31,12 @@ describe('movement', () => {
     expect(state.map.tiles[1]!.doorOpen).toBe(true);
   });
 
+  it('open doors (d) can be seen and walked through without extra cost', () => {
+    const g = createGame(scenario(['.d.'], [{ id: 'a1', side: 'a', x: 0, y: 0, facing: 2 }, { id: 'b1', side: 'b', x: 2, y: 0, facing: 6 }]), WEAPONS, 1);
+    expect(hasLineOfSight(g.map, { x: 0, y: 0 }, { x: 2, y: 0 })).toBe(true);
+    expect(findPath(g, g.units[0]!, { x: 1, y: 0 })!.cost).toBe(2);
+  });
+
   it('does not allow walking onto friends', () => {
     const g = createGame(scenario(OPEN, [{ id: 'a1', side: 'a', x: 0, y: 0, facing: 2 }, { id: 'a2', side: 'a', x: 1, y: 0 }, { id: 'b1', side: 'b', x: 9, y: 4 }]), WEAPONS, 1);
     const { result } = applyCommand(g, { type: 'move', side: 'a', unitId: 'a1', path: [{ x: 1, y: 0 }] });
