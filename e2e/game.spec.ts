@@ -14,6 +14,26 @@ test('main menu renders and language can be switched to Czech', async ({ page })
   await expect(page.getByRole('button', { name: /Výcvik/ })).toBeVisible();
 });
 
+for (const viewport of [{ width: 360, height: 640 }, { width: 360, height: 780 }, { width: 780, height: 360 }]) {
+  test(`phone menu keeps its title visible and all content reachable at ${viewport.width}x${viewport.height}`, async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'phone layout');
+    await page.setViewportSize(viewport);
+    await page.goto('/?e2e');
+    await page.evaluate(() => document.fonts.ready);
+    const title = page.getByRole('heading', { name: 'Squad Protocol' });
+    await page.screenshot({ path: `test-results/menu-phone-${viewport.width}x${viewport.height}.png` });
+    await expect(title).toBeInViewport({ ratio: 1 });
+    const menu = page.locator('main.menu');
+    expect(await menu.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    const tip = page.getByRole('complementary', { name: 'Tip of the day' });
+    await tip.scrollIntoViewIfNeeded();
+    // Mobile scrolling can leave a fractional pixel outside the intersection rectangle.
+    await expect(tip).toBeInViewport({ ratio: 0.99 });
+    await title.scrollIntoViewIfNeeded();
+    await expect(title).toBeInViewport({ ratio: 1 });
+  });
+}
+
 test('pseudo-locale shows no missing keys in menu or game', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('sp.settings', JSON.stringify({ locale: 'en-XA' })));
   await page.goto('/?e2e');
