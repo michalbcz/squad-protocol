@@ -4,15 +4,22 @@ interface Persisted {
   locale: string | null;
   coach: boolean;
   lastPlayed: number | null;
-  tutorialDone: boolean;
+  /** Completed Boot Camp mission ids. */
+  bootCamp: string[];
+  /** Coach tips already shown. */
+  seenTips: string[];
   speed: number;
 }
 
-const DEFAULTS: Persisted = { locale: null, coach: true, lastPlayed: null, tutorialDone: false, speed: 1 };
+const DEFAULTS: Persisted = { locale: null, coach: true, lastPlayed: null, bootCamp: [], seenTips: [], speed: 1 };
 
 function load(): Persisted {
   try {
-    return { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<Persisted>) };
+    const raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<Persisted> & { tutorialDone?: boolean };
+    // Migrate the old single-mission flag.
+    if (raw.tutorialDone && !raw.bootCamp) raw.bootCamp = ['firstSteps'];
+    delete raw.tutorialDone;
+    return { ...DEFAULTS, ...raw };
   } catch {
     return { ...DEFAULTS };
   }
@@ -30,8 +37,18 @@ class Settings {
   set locale(v) { this.data.locale = v; this.save(); }
   get coach() { return this.data.coach; }
   set coach(v) { this.data.coach = v; this.save(); }
-  get tutorialDone() { return this.data.tutorialDone; }
-  set tutorialDone(v) { this.data.tutorialDone = v; this.save(); }
+  get bootCamp(): readonly string[] { return this.data.bootCamp; }
+  completeMission(id: string): void {
+    if (!this.data.bootCamp.includes(id)) this.data.bootCamp = [...this.data.bootCamp, id];
+    this.save();
+  }
+  resetBootCamp(): void { this.data.bootCamp = []; this.save(); }
+  hasSeenTip(id: string): boolean { return this.data.seenTips.includes(id); }
+  markTipSeen(id: string): void {
+    if (!this.hasSeenTip(id)) this.data.seenTips = [...this.data.seenTips, id];
+    this.save();
+  }
+  resetTips(): void { this.data.seenTips = []; this.save(); }
   get speed() { return this.data.speed; }
   set speed(v) { this.data.speed = v; this.save(); }
   get lastPlayed() { return this.data.lastPlayed; }

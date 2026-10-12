@@ -6,10 +6,17 @@
   import type { LocalSession } from '../lib/session';
   import { settings } from '../lib/settings.svelte';
   import { Board } from '../render/board';
-  import type { TutorialStep } from '../tutorial/steps';
+  import type { TutorialMission } from '../tutorial/steps';
+  import CoachTips from './CoachTips.svelte';
   import Tutorial from './Tutorial.svelte';
 
-  let { session, tutorial, onquit, onrestart }: { session: LocalSession; tutorial: TutorialStep[] | null; onquit: () => void; onrestart: () => void } = $props();
+  let {
+    session,
+    mission,
+    onquit,
+    onrestart,
+    onnext,
+  }: { session: LocalSession; mission: TutorialMission | null; onquit: () => void; onrestart: () => void; onnext: (() => void) | null } = $props();
 
   let host: HTMLDivElement;
   let device = $state<Device>('mouse');
@@ -89,8 +96,9 @@
     { mode: 'auto', action: 'fireAuto' },
   ];
 
+  const won = $derived(ctrl.view.over && ctrl.view.winner === ctrl.view.side);
   $effect(() => {
-    if (ctrl.view.over && tutorial && ctrl.view.winner === ctrl.view.side) settings.tutorialDone = true;
+    if (won && mission) settings.completeMission(mission.id);
   });
 </script>
 
@@ -137,7 +145,7 @@
         </button>
       {/each}
     </div>
-    <div class="group">
+    <div class="group" data-tut="turn-buttons">
       <button disabled={!ctrl.myTurn} onclick={() => ctrl.turn(-1)} aria-label={t('action.turnLeft')}>⟲{#if glyph('turnLeft')}<kbd>{glyph('turnLeft')}</kbd>{/if}</button>
       <button disabled={!ctrl.myTurn} onclick={() => ctrl.turn(1)} aria-label={t('action.turnRight')}>⟳{#if glyph('turnRight')}<kbd>{glyph('turnRight')}</kbd>{/if}</button>
       <button disabled={!ctrl.myTurn} onclick={() => ctrl.toggleNearestDoor()}>{t('action.door')}{#if glyph('toggleDoor')}<kbd>{glyph('toggleDoor')}</kbd>{/if}</button>
@@ -169,8 +177,10 @@
     </div>
   {/if}
 
-  {#if tutorial}
-    <Tutorial steps={tutorial} {ctrl} {device} {board} />
+  {#if mission}
+    <Tutorial steps={mission.steps} {ctrl} {device} {board} />
+  {:else}
+    <CoachTips {ctrl} />
   {/if}
 
   {#if ctrl.handoffTo}
@@ -187,11 +197,23 @@
   {#if ctrl.view.over}
     <div class="cover" role="dialog" aria-modal="true">
       <div class="panel card">
-        <h2>{ctrl.view.winner === null ? t('over.draw') : ctrl.view.winner === ctrl.view.side || session.humans().length > 1 ? t('over.victory', { side: sideName(ctrl.view.winner) }) : t('over.defeat')}</h2>
+        {#if mission && won}
+          <h2>{t('over.missionComplete')}</h2>
+          <p class="muted">{onnext ? t('over.missionNext') : t('over.bootcampDone')}</p>
+        {:else}
+          <h2>{ctrl.view.winner === null ? t('over.draw') : won || session.humans().length > 1 ? t('over.victory', { side: sideName(ctrl.view.winner) }) : t('over.defeat')}</h2>
+          {#if mission}<p class="muted">{t('over.missionRetry')}</p>{/if}
+        {/if}
         <div class="row">
-          <!-- svelte-ignore a11y_autofocus -->
-          <button class="primary" data-primary autofocus onclick={onrestart}>{t('over.again')}</button>
-          <button onclick={onquit}>{t('over.menu')}</button>
+          {#if mission && won && onnext}
+            <!-- svelte-ignore a11y_autofocus -->
+            <button class="primary" data-primary autofocus onclick={onnext}>{t('over.nextMission')}</button>
+            <button onclick={onrestart}>{t('over.again')}</button>
+          {:else}
+            <!-- svelte-ignore a11y_autofocus -->
+            <button class="primary" data-primary autofocus onclick={onrestart}>{t('over.again')}</button>
+          {/if}
+          <button onclick={onquit}>{mission ? t('over.bootcamp') : t('over.menu')}</button>
         </div>
       </div>
     </div>

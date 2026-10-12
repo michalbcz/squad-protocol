@@ -1,9 +1,14 @@
 <script lang="ts">
   import { t } from '../lib/i18n.svelte';
   import { settings } from '../lib/settings.svelte';
+  import { BOOT_CAMP } from '../tutorial/steps';
+  import { randomTip } from '../tutorial/tips';
 
-  type StartMode = 'bootcamp' | 'skirmish' | 'hotseat';
-  let { onstart, onnavigate }: { onstart: (m: StartMode) => void; onnavigate: (s: 'codex' | 'settings' | 'refresher') => void } = $props();
+  type StartMode = 'skirmish' | 'hotseat';
+  let { onstart, onnavigate }: { onstart: (m: StartMode) => void; onnavigate: (s: 'codex' | 'settings' | 'refresher' | 'bootcamp') => void } = $props();
+
+  const trained = $derived(settings.bootCamp.length >= BOOT_CAMP.length);
+  const tip = randomTip();
 </script>
 
 <main class="menu">
@@ -12,10 +17,10 @@
     <p class="muted">{t('app.tagline')}</p>
   </header>
   <nav class="panel" aria-label={t('menu.label')}>
-    <button class:primary={!settings.tutorialDone} onclick={() => onstart('bootcamp')}>
-      {t('menu.bootcamp')}<span class="sub">{t('menu.bootcamp.sub')}</span>
+    <button class:primary={!trained} onclick={() => onnavigate('bootcamp')}>
+      {t('menu.bootcamp')}<span class="sub">{t('menu.bootcamp.sub', { done: settings.bootCamp.length, count: BOOT_CAMP.length })}</span>
     </button>
-    <button class:primary={settings.tutorialDone} onclick={() => onstart('skirmish')}>
+    <button class:primary={trained} onclick={() => onstart('skirmish')}>
       {t('menu.skirmish')}<span class="sub">{t('menu.skirmish.sub')}</span>
     </button>
     <button onclick={() => onstart('hotseat')}>
@@ -33,6 +38,10 @@
       <button onclick={() => onnavigate('settings')}>{t('menu.settings')}</button>
     </div>
   </nav>
+  <aside class="tip panel" aria-label={t('tips.ofTheDay')}>
+    <strong>💡 {t('tips.ofTheDay')}: {t(`tips.${tip}.title`)}</strong>
+    <p>{t(`tips.${tip}.body`)}</p>
+  </aside>
 </main>
 
 <style>
@@ -52,4 +61,6 @@
   .sub { font-size: 0.8rem; color: var(--muted); }
   .row { display: flex; gap: 8px; flex-wrap: wrap; }
   .row button { flex: 1; }
+  .tip { width: min(420px, 92vw); padding: 10px 14px; font-size: 0.85rem; }
+  .tip p { margin: 4px 0 0; color: var(--muted); line-height: 1.4; }
 </style>

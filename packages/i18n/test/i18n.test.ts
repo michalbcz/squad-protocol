@@ -3,7 +3,7 @@ import { createI18n, negotiateLocale, PSEUDO } from '../src';
 import cs from '../locales/cs.json';
 import en from '../locales/en.json';
 
-const VALUES = { count: 2, ap: 1, cost: 1, chance: 50, name: 'x', side: 'x', turn: 1, key: 'x', hp: 1, amount: 3, days: 3, step: 1, confirm: 'Enter', endTurn: 'E', snap: '1', aimed: '2' };
+const VALUES = { count: 2, ap: 1, cost: 1, chance: 50, name: 'x', side: 'x', turn: 1, key: 'x', hp: 1, amount: 3, days: 3, step: 1, done: 1, confirm: 'Enter', endTurn: 'E', snap: '1', aimed: '2', turnLeft: 'Q', turnRight: 'R', next: 'Tab' };
 
 describe('i18n', () => {
   it('formats plurals per locale', () => {

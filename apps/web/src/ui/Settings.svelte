@@ -18,7 +18,10 @@
       </select>
     </label>
     <label class="check"><input type="checkbox" bind:checked={settings.coach} /> {t('settings.coach')}</label>
-    <label class="check"><input type="checkbox" bind:checked={settings.tutorialDone} /> {t('settings.tutorialDone')}</label>
+    <div class="actions">
+      <button disabled={settings.bootCamp.length === 0} onclick={() => settings.resetBootCamp()}>{t('settings.resetBootCamp')}</button>
+      <button onclick={() => { settings.resetTips(); settings.coach = true; }}>{t('settings.resetTips')}</button>
+    </div>
   </div>
 </main>
 
@@ -31,4 +34,5 @@
   .check { display: flex; align-items: center; gap: 8px; min-height: var(--hit); }
   select { font: inherit; min-height: var(--hit); background: #0b0f15; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding-inline: 8px; }
   input[type='checkbox'] { width: 22px; height: 22px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 </style>

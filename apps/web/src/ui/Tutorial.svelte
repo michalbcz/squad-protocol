@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Device } from '@sp/input';
+  import type { Action, Device } from '@sp/input';
   import { keyLabel, DEFAULT_KEYS, padLabel } from '@sp/input';
   import { onDestroy } from 'svelte';
   import type { GameController } from '../lib/controller.svelte';
@@ -18,7 +18,7 @@
     // A step may already be satisfied when it starts (e.g. the game ended during the previous step).
     queueMicrotask(() => {
       const s = steps[index];
-      if (s?.until?.({ type: 'camera' }, ctrl)) advance();
+      if (s?.until?.({ type: 'check' }, ctrl)) advance();
     });
   }
 
@@ -29,11 +29,15 @@
   });
   onDestroy(off);
 
+  const glyph = (a: Action) => (device === 'gamepad' ? padLabel(a) || '⟳' : keyLabel(DEFAULT_KEYS, a));
   const keys = $derived({
-    confirm: device === 'gamepad' ? padLabel('confirm') : keyLabel(DEFAULT_KEYS, 'confirm'),
-    endTurn: device === 'gamepad' ? padLabel('endTurn') : keyLabel(DEFAULT_KEYS, 'endTurn'),
-    snap: device === 'gamepad' ? padLabel('fireSnap') : keyLabel(DEFAULT_KEYS, 'fireSnap'),
-    aimed: device === 'gamepad' ? padLabel('fireAimed') : keyLabel(DEFAULT_KEYS, 'fireAimed'),
+    confirm: glyph('confirm'),
+    endTurn: glyph('endTurn'),
+    snap: glyph('fireSnap'),
+    aimed: glyph('fireAimed'),
+    turnLeft: glyph('turnLeft'),
+    turnRight: glyph('turnRight'),
+    next: glyph('nextUnit'),
   });
 
   // Spotlight UI elements by their data-tut attribute.
@@ -94,6 +98,21 @@
   }
   @keyframes -global-tut-pulse {
     50% { outline-color: transparent; }
+  }
+  /* Landscape phones: dock to the side so the board centre (where hints point) stays visible. */
+  @media (max-height: 520px) {
+    .tutorial {
+      inset-block-start: 52px;
+      inset-inline: auto max(8px, env(safe-area-inset-right));
+      transform: none;
+      width: min(340px, 38vw);
+      padding: 8px 12px;
+      font-size: 0.8rem;
+    }
+    :global([dir='rtl']) .tutorial { transform: none; }
+    p { margin: 4px 0 6px; line-height: 1.3; }
+    .row button { min-height: 36px; }
+    .reopen { inset-block-start: 52px; inset-inline: auto max(8px, env(safe-area-inset-right)); }
   }
   @media (prefers-reduced-motion: reduce) {
     :global([data-tut-active]) { animation: none; }
