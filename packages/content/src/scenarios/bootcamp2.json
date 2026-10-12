@@ -1,0 +1,37 @@
+{
+  "format": "squad-protocol/scenario",
+  "version": 1,
+  "id": "bootcamp2",
+  "titleKey": "scenario.bootcamp2.title",
+  "briefingKey": "scenario.bootcamp2.briefing",
+  "strings": {
+    "en": {
+      "scenario.bootcamp2.title": "Boot Camp: Cover & Fire",
+      "scenario.bootcamp2.briefing": "Blast through cover, compare fire modes and learn how range changes the odds."
+    },
+    "cs": {
+      "scenario.bootcamp2.title": "Výcvik: Kryt a palba",
+      "scenario.bootcamp2.briefing": "Prostřílej se krytem, porovnej režimy palby a zjisti, jak vzdálenost mění šance."
+    }
+  },
+  "map": [
+    "###############",
+    "#......#......#",
+    "#......#......#",
+    "#......C......#",
+    "#......C......#",
+    "#......C......#",
+    "#......#......#",
+    "#......#......#",
+    "###############"
+  ],
+  "sides": [
+    { "id": "blue", "nameKey": "side.blue", "controller": "human" },
+    { "id": "red", "nameKey": "side.drones", "controller": "ai" }
+  ],
+  "units": [
+    { "id": "b1", "side": "blue", "nameKey": "unit.vega", "x": 2, "y": 4, "facing": 2, "weaponId": "pulseRifle", "template": { "maxAp": 40, "maxHp": 60, "armor": 4, "accuracy": 70 } },
+    { "id": "r1", "side": "red", "nameKey": "unit.drone", "x": 11, "y": 4, "facing": 6, "weaponId": "sidearm", "template": { "maxAp": 1, "maxHp": 30, "armor": 0, "accuracy": 1 } }
+  ],
+  "victory": [{ "type": "eliminate" }]
+}

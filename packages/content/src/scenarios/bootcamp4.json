@@ -1,0 +1,44 @@
+{
+  "format": "squad-protocol/scenario",
+  "version": 1,
+  "id": "bootcamp4",
+  "titleKey": "scenario.bootcamp4.title",
+  "briefingKey": "scenario.bootcamp4.briefing",
+  "strings": {
+    "en": {
+      "scenario.bootcamp4.title": "Boot Camp: Squad Tactics",
+      "scenario.bootcamp4.briefing": "Lead a full squad against live opponents. Cover each other, flank and focus fire."
+    },
+    "cs": {
+      "scenario.bootcamp4.title": "Výcvik: Taktika čety",
+      "scenario.bootcamp4.briefing": "Veď celou četu proti skutečným protivníkům. Kryjte se navzájem, obcházejte a soustřeďte palbu."
+    }
+  },
+  "map": [
+    "####################",
+    "#,,,,,,,,,,,,,,,,,,#",
+    "#,,C,,,,,,,,,,,,C,,#",
+    "#,,,,,,####D####,,,#",
+    "#,,,,,,#.......#,,,#",
+    "#,,,,,,W.......W,,,#",
+    "#,,,,,,#...C...#,,,#",
+    "#,,,,,,####D####,,,#",
+    "#,,C,,,,,,,,,,,,C,,#",
+    "#,,,,,,,,,,,,,,,,,,#",
+    "#,,,,,,,,,,,,,,,,,,#",
+    "####################"
+  ],
+  "sides": [
+    { "id": "blue", "nameKey": "side.blue", "controller": "human" },
+    { "id": "red", "nameKey": "side.red", "controller": "ai" }
+  ],
+  "units": [
+    { "id": "b1", "side": "blue", "nameKey": "unit.vega", "x": 2, "y": 10, "facing": 0, "weaponId": "pulseRifle", "template": { "maxAp": 36, "maxHp": 60, "armor": 4, "accuracy": 65 } },
+    { "id": "b2", "side": "blue", "nameKey": "unit.lind", "x": 4, "y": 10, "facing": 0, "weaponId": "marksmanLaser", "template": { "maxAp": 32, "maxHp": 50, "armor": 2, "accuracy": 75 } },
+    { "id": "b3", "side": "blue", "nameKey": "unit.marsh", "x": 3, "y": 9, "facing": 1, "weaponId": "sidearm", "template": { "maxAp": 42, "maxHp": 55, "armor": 3, "accuracy": 60 } },
+    { "id": "r1", "side": "red", "nameKey": "unit.guard", "x": 9, "y": 5, "facing": 4, "weaponId": "pulseRifle", "template": { "maxAp": 30, "maxHp": 45, "armor": 2, "accuracy": 45 } },
+    { "id": "r2", "side": "red", "nameKey": "unit.guard", "x": 13, "y": 4, "facing": 4, "weaponId": "sidearm", "template": { "maxAp": 30, "maxHp": 45, "armor": 2, "accuracy": 45 } },
+    { "id": "r3", "side": "red", "nameKey": "unit.sniper", "x": 17, "y": 1, "facing": 5, "weaponId": "marksmanLaser", "template": { "maxAp": 28, "maxHp": 40, "armor": 1, "accuracy": 55 } }
+  ],
+  "victory": [{ "type": "eliminate" }]
+}

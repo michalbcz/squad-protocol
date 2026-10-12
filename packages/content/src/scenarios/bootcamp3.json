@@ -1,0 +1,38 @@
+{
+  "format": "squad-protocol/scenario",
+  "version": 1,
+  "id": "bootcamp3",
+  "titleKey": "scenario.bootcamp3.title",
+  "briefingKey": "scenario.bootcamp3.briefing",
+  "strings": {
+    "en": {
+      "scenario.bootcamp3.title": "Boot Camp: Reaction Fire",
+      "scenario.bootcamp3.briefing": "Saved action points become reaction fire. Set an ambush – and learn to avoid one."
+    },
+    "cs": {
+      "scenario.bootcamp3.title": "Výcvik: Reakční palba",
+      "scenario.bootcamp3.briefing": "Ušetřené akční body se mění v reakční palbu. Nastraž léčku – a nauč se do žádné nevběhnout."
+    }
+  },
+  "map": [
+    "################",
+    "#......#.......#",
+    "#......#.......#",
+    "#......#.......#",
+    "#......d.......#",
+    "#......#.......#",
+    "#......#.......#",
+    "#......#.......#",
+    "################"
+  ],
+  "sides": [
+    { "id": "blue", "nameKey": "side.blue", "controller": "human" },
+    { "id": "red", "nameKey": "side.drones", "controller": "ai" }
+  ],
+  "units": [
+    { "id": "b1", "side": "blue", "nameKey": "unit.vega", "x": 3, "y": 4, "facing": 6, "weaponId": "pulseRifle", "template": { "maxAp": 40, "maxHp": 60, "armor": 4, "accuracy": 70 } },
+    { "id": "r1", "side": "red", "nameKey": "unit.drone", "x": 13, "y": 1, "facing": 4, "weaponId": "sidearm", "template": { "maxAp": 24, "maxHp": 30, "armor": 0, "accuracy": 35 } },
+    { "id": "r2", "side": "red", "nameKey": "unit.drone", "x": 14, "y": 6, "facing": 6, "weaponId": "sidearm", "template": { "maxAp": 24, "maxHp": 30, "armor": 0, "accuracy": 35 } }
+  ],
+  "victory": [{ "type": "eliminate" }]
+}
