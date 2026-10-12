@@ -29,11 +29,16 @@ export type Preview =
 /** Events the tutorial and HUD can react to. */
 export type UiSignal =
   | { type: 'selected'; unitId: string }
-  | { type: 'previewed'; kind: Preview['kind'] }
+  | { type: 'previewed'; preview: Preview }
   | { type: 'mode'; mode: Mode }
   | { type: 'command'; command: Command; events: GameEvent[] }
   | { type: 'rejected'; error: CommandError }
-  | { type: 'camera' };
+  /** Events the viewer witnessed (own actions, enemy turns, hotseat backlog). */
+  | { type: 'events'; events: GameEvent[] }
+  /** The player panned or zoomed the camera. */
+  | { type: 'camera' }
+  /** Synthetic re-evaluation, e.g. when a tutorial step starts. */
+  | { type: 'check' };
 
 export interface LogEntry {
   id: number;
@@ -285,7 +290,7 @@ export class GameController {
       else this.preview = { kind: 'fire', target: tile, chance: hitChance(state, u, tile, this.mode), cost, mode: this.mode };
     }
     this.cursor = tile;
-    this.emit({ type: 'previewed', kind: this.preview.kind });
+    this.emit({ type: 'previewed', preview: this.preview });
     this.sync();
   }
 
@@ -335,6 +340,7 @@ export class GameController {
         this.summarize(u.backlog, true);
         await this.board.play(u.backlog.filter((e) => e.type === 'shotFired'), 2);
         this.autoSelect();
+        this.emit({ type: 'events', events: u.backlog });
       } else {
         await this.board.play(u.events);
         this.view = u.view;
@@ -343,6 +349,7 @@ export class GameController {
         if (!this.selected?.alive) this.autoSelect();
         const last = u.events.at(-1);
         if (cmd) this.emit({ type: 'command', command: cmd, events: u.events });
+        this.emit({ type: 'events', events: u.events });
         if (last?.type === 'turnStarted' && last.side === this.view.side) this.autoSelect();
         // Refresh the preview against the new state.
         if (this.cursor && this.myTurn) this.previewAt(this.cursor);
@@ -389,8 +396,9 @@ export class GameController {
     for (const fn of this.signals) fn(s);
   }
 
-  cameraMoved(): void {
+  cameraMoved(user: boolean): void {
     this.cameraTick++;
+    if (user) this.emit({ type: 'camera' });
   }
 }
 

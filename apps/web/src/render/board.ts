@@ -26,7 +26,8 @@ export interface BoardCallbacks {
   onHover(tile: Vec | null): void;
   onLongPress(tile: Vec): void;
   onPointer(e: PointerEvent): void;
-  onCamera(): void;
+  /** `user` is true when the player panned/zoomed, false for programmatic moves. */
+  onCamera(user: boolean): void;
 }
 
 /** PixiJS map renderer. Owns no game rules: it draws a PlayerView plus UI hints. */
@@ -130,7 +131,7 @@ export class Board {
     }
     const s = this.app.screen;
     this.world.position.set(s.width / 2 - (p.x + 0.5) * TILE * this.zoom, s.height / 2 - (p.y + 0.5) * TILE * this.zoom);
-    this.cb.onCamera();
+    this.cb.onCamera(false);
   }
 
   zoomBy(f: number, around?: { x: number; y: number }): void {
@@ -143,7 +144,7 @@ export class Board {
     this.zoom = nz;
     this.world.scale.set(nz);
     this.world.position.set(c.x - wx * nz, c.y - wy * nz);
-    this.cb.onCamera();
+    this.cb.onCamera(true);
   }
 
   /** Screen (CSS px) position of a tile's top-centre, for DOM tooltips. */
@@ -162,7 +163,7 @@ export class Board {
       (s.width - this.view.map.width * TILE * this.zoom) / 2,
       (s.height - this.view.map.height * TILE * this.zoom) / 2,
     );
-    this.cb.onCamera();
+    this.cb.onCamera(false);
   }
 
   private redraw(): void {
@@ -366,7 +367,7 @@ export class Board {
       if (down?.moved) {
         this.world.x += p.x - prev.x;
         this.world.y += p.y - prev.y;
-        this.cb.onCamera();
+        this.cb.onCamera(true);
       } else if (e.pointerType === 'mouse') {
         this.cb.onHover(toTile(p));
       }

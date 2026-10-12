@@ -21,7 +21,7 @@
     onHover: (tile) => ctrl.hover(tile),
     onLongPress: (tile) => ctrl.longPress(tile),
     onPointer: (e) => hub?.notePointer(e),
-    onCamera: () => ctrl?.cameraMoved(),
+    onCamera: (user) => ctrl?.cameraMoved(user),
   });
   // svelte-ignore state_referenced_locally (the screen is re-created per session via {#key})
   const ctrl = new GameController(session, board);

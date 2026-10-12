@@ -32,6 +32,12 @@ export interface LocalOptions {
   /** Override per-side controller from the scenario (e.g. play both sides in hotseat). */
   controllers?: Record<SideId, 'human' | 'ai'>;
   aiStepMs?: number;
+  /**
+   * Scripted commands for AI sides, keyed by side then turn number. Used by tutorials so an
+   * opponent does something specific (e.g. walk into an ambush). Turns without a script, or
+   * whose script is exhausted, fall back to the regular AI.
+   */
+  script?: Record<SideId, Record<number, Command[]>>;
 }
 
 export class LocalSession implements Session {
@@ -136,11 +142,31 @@ export class LocalSession implements Session {
       const side = this.match.state.activeSide;
       const mem = this.memories.get(side) ?? createMemory();
       this.memories.set(side, mem);
+      const scripted = this.nextScripted(side);
+      if (scripted) {
+        // A scripted step may become illegal (unit killed, path blocked): just skip it.
+        this.match.submit(scripted);
+        this.afterCommand();
+        return;
+      }
       const cmd = nextCommand(this.match.view(side), mem);
       const r = this.match.submit(cmd);
       if (!r.ok) this.match.submit({ type: 'endTurn', side }); // never stall on an AI bug
       this.afterCommand();
     }, this.opts.aiStepMs ?? 250);
+  }
+
+  private scriptCursor = new Map<string, number>();
+
+  private nextScripted(side: SideId): Command | null {
+    const turn = this.match.state.turn;
+    const list = this.opts.script?.[side]?.[turn];
+    if (!list) return null;
+    const key = `${side}:${turn}`;
+    const i = this.scriptCursor.get(key) ?? 0;
+    if (i >= list.length) return null;
+    this.scriptCursor.set(key, i + 1);
+    return list[i]!;
   }
 
   private emit(u: SessionUpdate): void {
