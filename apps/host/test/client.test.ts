@@ -81,3 +81,16 @@ it('automatically reconnects and blocks commands until the resumed snapshot arri
   await expect.poll(() => resumed.status).toBe('connected');
   expect(resumed.snapshot?.view.side).toBe('red');
 });
+
+it('stops recovery when the seat is resumed in another tab', async () => {
+  const { blue, red } = await clients();
+  const replacement = new MultiplayerClient(blue.host, { room: red.room!.room, token: red.room!.token });
+  dispose.push(() => replacement.dispose());
+  await expect.poll(() => replacement.snapshot?.view.side).toBe('red');
+  await expect.poll(() => red.status).toBe('replaced');
+  expect(red.error).toBe('seatReplaced');
+  expect(await red.submit({ type: 'endTurn', side: 'red' })).toEqual({ ok: false, error: 'disconnected' });
+  expect(await blue.submit({ type: 'endTurn', side: 'blue' })).toEqual({ ok: true, events: [] });
+  await expect.poll(() => replacement.snapshot?.view.activeSide).toBe('red');
+  expect(await replacement.submit({ type: 'endTurn', side: 'red' })).toEqual({ ok: true, events: [] });
+});

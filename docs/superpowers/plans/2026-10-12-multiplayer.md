@@ -32,9 +32,9 @@
 
 **Interfaces:** parseClientMessage(unknown): ClientMessage; ServerMessage discriminated union; createHost({port?,hostname?,staticDir?}) returns server, listen() and close(). Rooms use Match filtered subscriptions. No successful raw CommandResult is serialized.
 
-- [ ] Add failing protocol and real socket integration tests for lobby, authority/privacy, validation, revision/deduplication, resume, leave and static paths. Run focused Vitest and observe missing feature failures.
-- [ ] Implement v1 schemas, seat binding and bounded rooms; add HTTP/WebSocket server, heartbeat, static serving and Node CLI. Install ws/tsx/Node types.
-- [ ] Run focused tests then just typecheck and just test. Expected: all pass.
+- [x] Add failing protocol and real socket integration tests for lobby, authority/privacy, validation, revision/deduplication, resume, leave and static paths. Run focused Vitest and observe missing feature failures.
+- [x] Implement v1 schemas, seat binding and bounded rooms; add HTTP/WebSocket server, heartbeat, static serving and Node CLI. Install ws/tsx/Node types.
+- [x] Run focused tests then just typecheck and just test. Expected: all pass.
 
 ### Task 2: Browser client and asynchronous Session
 
@@ -42,9 +42,9 @@
 
 **Interfaces:** MultiplayerClient wraps Transport, publishes connection/room/snapshot/update/error notifications, and returns asynchronous command results; NetSession implements Session using metadata and PlayerView. Session.submit accepts sync or async results. SessionUpdate events may carry the originating Command. Status updates lock disconnected games.
 
-- [ ] Write failing client integration tests for command completion, disconnect/reconnect, failed credentials and deduplication. Observe RED using the host from Task 1.
-- [ ] Implement native WebSocket transport, request correlation/timeouts, bounded reconnect and session adapter. Update controller pending-command locking and asynchronous error reporting without breaking local sessions.
-- [ ] Run client tests and the full unit/typecheck gates. Expected: all pass.
+- [x] Write failing client integration tests for command completion, disconnect/reconnect, failed credentials and deduplication. Observe RED using the host from Task 1.
+- [x] Implement native WebSocket transport, request correlation/timeouts, bounded reconnect and session adapter. Update controller pending-command locking and asynchronous error reporting without breaking local sessions.
+- [x] Run client tests and the full unit/typecheck gates. Expected: all pass.
 
 ### Task 3: Lobby, browser acceptance and documentation
 
@@ -52,7 +52,7 @@
 
 **Interfaces:** Multiplayer emits an established NetSession on start; App routes invite URLs and disposes sessions. The production host starts via just host; optional tunnel uses cloudflared externally.
 
-- [ ] Write failing two-browser create/join/play/reload/quit tests, desktop and touch; observe missing lobby failure.
-- [ ] Build localized lobby and reconnect status with existing controls, wire menu/App/game lifecycle, and add host/e2e runner commands.
-- [ ] Use update-design, update-architecture and adr skills to record shipped scope and protocol v1. Add running instructions and tunnel workflow.
-- [ ] Run just typecheck, just test, just e2e. Expected: all pass. Review the whole change and fix material findings with regression tests.
+- [x] Write failing two-browser create/join/play/reload/quit tests, desktop and touch; observe missing lobby failure.
+- [x] Build localized lobby and reconnect status with existing controls, wire menu/App/game lifecycle, and add host/e2e runner commands.
+- [x] Use update-design, update-architecture and adr skills to record shipped scope and protocol v1. Add running instructions and tunnel workflow.
+- [x] Run just typecheck, just test, just e2e. Expected: all pass. Review the whole change and fix material findings with regression tests.

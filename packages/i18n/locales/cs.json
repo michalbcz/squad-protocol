@@ -289,5 +289,7 @@
   "error.disconnected": "Spojení ztraceno. Čeká se na obnovení.",
   "error.timeout": "Hostitel včas neodpověděl. Obnovuje se spojení a stav hry.",
   "error.stale": "Stav hry se změnil. Tvůj pohled byl obnoven; zkus to znovu.",
-  "error.opponentDisconnected": "Soupeř je odpojen. Počkej na obnovení spojení."
+  "error.opponentDisconnected": "Soupeř je odpojen. Počkej na obnovení spojení.",
+  "net.status.replaced": "Tento tým je aktivní v jiné kartě — vrať se do menu",
+  "error.seatReplaced": "Tvůj tým byl otevřen v jiné kartě. Tato karta se přestala znovu připojovat."
 }

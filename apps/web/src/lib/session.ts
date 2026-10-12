@@ -11,7 +11,7 @@ export interface Session {
   readonly viewer: SideId;
   readonly view: PlayerView;
   readonly scenario: ScenarioInfo;
-  readonly connection?: 'connected' | 'connecting' | 'reconnecting' | 'disconnected' | 'closed' | 'opponentDisconnected';
+  readonly connection?: 'connected' | 'connecting' | 'reconnecting' | 'disconnected' | 'closed' | 'replaced' | 'opponentDisconnected';
   submit(cmd: Command): SubmitResult | Promise<SubmitResult>;
   /** Fired with the viewer's filtered events after each accepted command. */
   subscribe(fn: (u: SessionUpdate) => void): () => void;

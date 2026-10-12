@@ -16,3 +16,4 @@ Architecture and game-design decisions, newest last. Create one with `just adr "
 | [0010](0010-use-an-original-8-bit-tactical-presentation.md) | Use an original 8-bit tactical presentation | Game design | Accepted |
 | [0011](0011-ship-versioned-websocket-rooms-with-private-seats.md) | Ship versioned WebSocket rooms with private seats | Architecture | Accepted |
 | [0012](0012-pause-multiplayer-commands-during-disconnection.md) | Pause multiplayer commands during disconnection | Game design | Accepted |
+| [0013](0013-disable-replay-recording-for-hosted-matches.md) | Disable replay recording for hosted matches | Architecture | Accepted |

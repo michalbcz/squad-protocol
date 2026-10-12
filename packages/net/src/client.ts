@@ -1,8 +1,9 @@
 import type { Command } from '@sp/engine';
 import type { ClientMessage, NetError, RoomInfo, ServerMessage, SubmitResult } from './protocol';
 import { WebSocketTransport, hostUrl, type Transport } from './transport';
+import { SEAT_REPLACED_CLOSE_CODE } from './protocol';
 
-export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'closed';
+export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'closed' | 'replaced';
 export interface Credential { room: string; token: string }
 export type ClientUpdate = ServerMessage | { kind: 'status'; status: ConnectionStatus };
 type Snapshot = Extract<ServerMessage, { kind: 'snapshot' }>;
@@ -90,7 +91,7 @@ export class MultiplayerClient {
           this.setStatus('connected');
           if (this.credential) this.send({ version: 1, kind: 'resume', ...this.credential });
           else this.attempts = 0;
-        } else if (event.kind === 'close') this.lostConnection();
+        } else if (event.kind === 'close') this.lostConnection(event.code);
         else if (event.kind === 'invalid') {
           this.error = 'invalidMessage';
           this.emit({ version: 1, kind: 'error', code: 'invalidMessage' });
@@ -136,11 +137,19 @@ export class MultiplayerClient {
     }
     this.emit(message);
   }
-  private lostConnection(): void {
+  private lostConnection(code?: number): void {
     this.synced = false;
     this.failPending('disconnected');
     this.stopTransport();
-    if (this.disposed || this.status === 'closed') return;
+    if (this.disposed || this.status === 'closed' || this.status === 'replaced') return;
+    if (code === SEAT_REPLACED_CLOSE_CODE) {
+      this.credential = null;
+      this.room = null;
+      this.error = 'seatReplaced';
+      this.setStatus('replaced');
+      this.emit({ version: 1, kind: 'error', code: 'seatReplaced' });
+      return;
+    }
     if (this.credential && this.attempts < 5) {
       this.setStatus('reconnecting');
       this.reconnectTimer = setTimeout(() => { this.reconnectTimer = null; this.connect(); }, Math.min(5000, 500 * 2 ** this.attempts++));

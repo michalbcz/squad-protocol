@@ -289,5 +289,7 @@
   "error.disconnected": "Connection lost. Waiting to reconnect.",
   "error.timeout": "The host did not reply in time. Reconnecting to check the match.",
   "error.stale": "The match changed. Your view has been refreshed; try again.",
-  "error.opponentDisconnected": "Your opponent is disconnected. Wait for reconnection."
+  "error.opponentDisconnected": "Your opponent is disconnected. Wait for reconnection.",
+  "net.status.replaced": "This squad is active in another tab — return to the menu",
+  "error.seatReplaced": "Your squad was opened in another tab. This tab has stopped reconnecting."
 }

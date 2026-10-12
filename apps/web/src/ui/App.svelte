@@ -74,7 +74,7 @@
     mission = null;
     session = next;
     networkUnsubscribe = next.client.subscribe((message) => {
-      if (message.kind === 'closed' || (message.kind === 'error' && ['roomNotFound', 'invalidToken'].includes(message.code))) clearCredential();
+      if (message.kind === 'closed' || (message.kind === 'error' && ['roomNotFound', 'invalidToken', 'seatReplaced'].includes(message.code))) clearCredential();
     });
     screen = 'game';
   }

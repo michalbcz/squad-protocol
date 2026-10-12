@@ -49,7 +49,7 @@
           onstart(new NetSession(client!));
         } else if (message.kind === 'error') {
           error = message.code; busy = false;
-          if (message.code === 'roomNotFound' || message.code === 'invalidToken') { clearCredential(); room = null; }
+          if (message.code === 'roomNotFound' || message.code === 'invalidToken' || message.code === 'seatReplaced') { clearCredential(); room = null; }
         } else if (message.kind === 'closed') { clearCredential(); room = null; busy = false; error = 'roomNotFound'; }
       });
     } catch { client = null; status = 'disconnected'; error = 'invalidMessage'; }
@@ -69,7 +69,11 @@
     const hub = createInputHub(window);
     hub.on((action) => {
       if (action === 'cancel') back();
-      if (action === 'confirm') root.querySelector<HTMLButtonElement>('button[data-primary]:not(:disabled)')?.click();
+      if (action === 'confirm') {
+        const focused = document.activeElement;
+        if (focused instanceof HTMLButtonElement && root.contains(focused) && !focused.disabled) focused.click();
+        else root.querySelector<HTMLButtonElement>('button[data-primary]:not(:disabled)')?.click();
+      }
       if (action === 'cursorDown' || action === 'cursorUp') {
         const controls = [...root.querySelectorAll<HTMLElement>('button:not(:disabled), input, a[href]')];
         const current = controls.indexOf(document.activeElement as HTMLElement);

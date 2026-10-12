@@ -4,7 +4,7 @@ import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocket, WebSocketServer } from 'ws';
 import { SCENARIOS, WEAPONS } from '@sp/content';
-import { MAX_FRAME_BYTES, parseClientMessage } from '@sp/net';
+import { MAX_FRAME_BYTES, parseClientMessage, SEAT_REPLACED_CLOSE_CODE } from '@sp/net';
 import { Rooms, type Peer } from './rooms';
 
 export interface HostOptions { port?: number; hostname?: string; staticDir?: string }
@@ -47,7 +47,7 @@ export function createHost(options: HostOptions = {}) {
         if (socket.bufferedAmount > 1024 * 1024) { socket.terminate(); return; }
         socket.send(JSON.stringify({ version: 1, ...message }));
       },
-      close: () => socket.close(4001, 'Seat resumed'),
+      close: () => socket.close(SEAT_REPLACED_CLOSE_CODE, 'Seat resumed'),
     };
     alive.add(socket);
     let count = 0; let windowStart = Date.now();

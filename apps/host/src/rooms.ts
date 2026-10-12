@@ -49,7 +49,7 @@ export class Rooms {
       if (seat !== room.seats[0]) return this.error(peer, 'notHost');
       if (room.match || room.seats.length !== 2 || room.seats.some((s) => !s.peer)) return this.error(peer, 'notReady');
       const scenario = { ...this.scenario, sides: this.scenario.sides.map((s) => ({ ...s, controller: 'human' as const })) };
-      room.match = new Match(scenario, this.weapons, this.seed());
+      room.match = new Match(scenario, this.weapons, this.seed(), { recordCommands: false });
       this.broadcastRoom(room);
       for (const s of room.seats) this.snapshot(room, s);
       return;

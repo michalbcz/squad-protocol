@@ -3,6 +3,7 @@ import type { CommandError, GameEvent, PlayerView, Scenario, SideId } from '@sp/
 
 export const PROTOCOL_VERSION = 1;
 export const MAX_FRAME_BYTES = 64 * 1024;
+export const SEAT_REPLACED_CLOSE_CODE = 4001;
 const id = z.string().min(1).max(64);
 const vec = z.strictObject({ x: z.number().int().min(0).max(1024), y: z.number().int().min(0).max(1024) });
 const command = z.discriminatedUnion('type', [
@@ -25,7 +26,7 @@ export const ClientMessageSchema = z.discriminatedUnion('kind', [
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
 export function parseClientMessage(input: unknown): ClientMessage { return ClientMessageSchema.parse(input); }
 export type ScenarioInfo = Pick<Scenario, 'id' | 'titleKey' | 'briefingKey' | 'strings'>;
-export type NetError = 'invalidMessage' | 'versionMismatch' | 'roomNotFound' | 'roomFull' | 'invalidToken' | 'alreadyJoined' | 'notReady' | 'notHost' | 'capacity' | 'rateLimited' | 'disconnected' | 'timeout' | 'stale' | 'opponentDisconnected';
+export type NetError = 'invalidMessage' | 'versionMismatch' | 'roomNotFound' | 'roomFull' | 'invalidToken' | 'alreadyJoined' | 'notReady' | 'notHost' | 'capacity' | 'rateLimited' | 'disconnected' | 'timeout' | 'stale' | 'opponentDisconnected' | 'seatReplaced';
 export type SubmitError = CommandError | NetError;
 export type SubmitResult = { ok: true; events: GameEvent[] } | { ok: false; error: SubmitError };
 export type RoomInfo = { room: string; side: SideId; token: string; started: boolean; players: { side: SideId; connected: boolean }[] };

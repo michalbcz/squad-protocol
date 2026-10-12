@@ -52,6 +52,7 @@ Key ideas:
 - **Events** carry `seenBy`, and moves/shots also carry `originSeenBy`. Both are computed at emit time from live LOS, so no re-simulation is needed for filtering.
 - **Pure helpers** shared by UI and AI: `findPath`, `pathCosts`, `stepCost`, `hitChance`, `fireCost`, `canSee`, `hasLineOfSight`, `stateFromView`.
 - **`Match`** (`match.ts`) is the single authority. It holds the state and the command log, notifies subscribers with `(side, viewFor(side), eventsFor(events, side, state))`, and provides `toReplay()` / `Match.fromReplay()`.
+- Hosted matches set `MatchOptions.recordCommands` to false to avoid unbounded replay retention; `toReplay()` then throws rather than export incomplete history. Local replay recording stays enabled by default ([ADR 0013](docs/adr/0013-disable-replay-recording-for-hosted-matches.md)).
 - **Determinism:** the seeded mulberry32 RNG (`rng.ts`) is the only source of randomness. `hashState` (FNV-1a over JSON) supports replay checks and future desync detection.
 
 ## 4. Trust model & information flow ✅
@@ -133,7 +134,7 @@ Changing any versioned format requires a version bump, a migration path and an A
 
 - `just host [port]` builds and serves the web client plus /ws on one Node origin. The CLI prints localhost and LAN addresses; browser origins must match the host. Selecting a different host in the lobby opens its own page first. HTTP becomes WS; HTTPS becomes WSS, including manual HTTP tunnels.
 - Rooms contain two seats, private random tokens, per-seat result caches and an authoritative Match after the creator starts. Socket bindings enforce command identity; revisions reject stale commands. No raw success result, full scenario, RNG state or replay crosses the wire. Metadata contains id/title/briefing/translations only.
-- Commands pause when either side disconnects. The client retries five times, then exposes manual retry; same-tab reload resumes its seat. Leaving closes the room for both clients. The latest 128 request results per seat are cached; old repeated commands also fail revision checks.
+- Commands pause when either side disconnects. The client retries five times, then exposes manual retry; same-tab reload resumes its seat. Leaving closes the room for both clients. Resuming an occupied seat terminates recovery in the old tab; it cannot repeatedly evict the replacement. The latest 128 request results per seat are cached; old repeated commands also fail revision checks.
 - Limits: 64 KiB frames, 100 rooms, 256 sockets, 120 messages/minute/socket, 1 MiB outgoing backlog. A 15-second ping loop detects dead peers; rooms expire after 30 minutes without connected seats. State is in memory; host restarts end matches.
 - 📋 mDNS, automatic cloudflared/QR, WebRTC/manual signaling, loopback transport, desktop sidecars and mobile wrappers. Mobile browsers can join today.
 

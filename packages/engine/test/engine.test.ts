@@ -4,6 +4,14 @@ import { scenario, WEAPONS } from './helpers';
 
 const OPEN = ['..........', '..........', '..........', '..........', '..........'];
 
+it('can run a match without retaining replay history and refuses incomplete replay exports', () => {
+  const m = new Match(scenario(OPEN, [{ id: 'a1', side: 'a', x: 0, y: 0 }, { id: 'b1', side: 'b', x: 9, y: 4 }]), WEAPONS, 1, { recordCommands: false });
+  expect(m.submit({ type: 'endTurn', side: 'a' }).ok).toBe(true);
+  expect(m.view('b').activeSide).toBe('b');
+  expect(m.commands).toEqual([]);
+  expect(() => m.toReplay()).toThrow('Replay recording is disabled');
+});
+
 describe('movement', () => {
   it('charges AP for steps and turning', () => {
     const g = createGame(scenario(OPEN, [{ id: 'a1', side: 'a', x: 0, y: 0, facing: 2 }, { id: 'b1', side: 'b', x: 9, y: 4, facing: 0 }]), WEAPONS, 1);

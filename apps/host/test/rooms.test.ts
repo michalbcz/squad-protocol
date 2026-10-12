@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
-import { parseScenario } from '@sp/engine';
-import { WEAPONS } from '@sp/content';
+import { parseScenario, type Match } from '@sp/engine';
+import { SCENARIOS, WEAPONS } from '@sp/content';
 import { Rooms, type Peer } from '../src/rooms';
 import type { ServerBody } from '@sp/net';
 
@@ -47,4 +47,25 @@ it('bounds rooms and releases disconnected rooms after thirty minutes', () => {
   now = 30 * 60_000;
   rooms.handle(overflow.socket, { version: 1, kind: 'create' });
   expect(overflow.messages.at(-1)?.kind).toBe('room');
+});
+
+it('does not retain unbounded replay commands for a hosted match', () => {
+  const rooms = new Rooms(SCENARIOS.kestrel!, WEAPONS);
+  const blue = peer(); const red = peer();
+  rooms.handle(blue.socket, { version: 1, kind: 'create' });
+  const info = blue.messages.find((m) => m.kind === 'room');
+  if (info?.kind !== 'room') throw new Error('No room');
+  rooms.handle(red.socket, { version: 1, kind: 'join', room: info.room });
+  rooms.handle(blue.socket, { version: 1, kind: 'start' });
+  const snapshot = blue.messages.find((m) => m.kind === 'snapshot');
+  if (snapshot?.kind !== 'snapshot') throw new Error('No snapshot');
+  const unit = snapshot.view.units.find((u) => u.side === 'blue')!;
+  for (let i = 0; i < 500; i++) {
+    rooms.handle(blue.socket, { version: 1, kind: 'command', requestId: String(i), revision: i, command: { type: 'turn', side: 'blue', unitId: unit.id, facing: unit.facing } });
+    expect(blue.messages.at(-1)).toMatchObject({ kind: 'result', ok: true });
+  }
+  // Inspect retention rather than add a host API exposing authoritative state.
+  const internal = (rooms as unknown as { rooms: Map<string, { match: Match }> }).rooms.get(info.room)!;
+  expect(internal.match.commands.length).toBe(0);
+  expect(internal.match.view('blue').turn).toBe(1);
 });

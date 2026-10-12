@@ -71,3 +71,22 @@ test('opens the selected host before connecting from the standalone web page', a
   await page.getByRole('button', { name: 'Create room', exact: true }).click();
   await expect(page.getByLabel('Invite link')).toHaveValue(/room=[A-Z0-9]{8}/);
 });
+
+test('gamepad confirms the focused lobby control', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sp.settings', JSON.stringify({ locale: 'en', coach: false })));
+  await page.goto(`${host}/?e2e`);
+  await page.getByRole('button', { name: /Multiplayer/ }).click();
+  await page.evaluate(() => {
+    const buttons = Array.from({ length: 17 }, (_, i) => ({ pressed: i === 13, value: i === 13 ? 1 : 0, touched: false }));
+    const pad = { index: 0, axes: [0, 0], buttons };
+    Object.assign(window, { __testPad: pad });
+    Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [pad] });
+    (document.activeElement as HTMLElement)?.blur();
+  });
+  await expect(page.getByRole('button', { name: /Back/ })).toBeFocused();
+  await page.evaluate(() => {
+    const pad = (window as unknown as { __testPad: { buttons: { pressed: boolean }[] } }).__testPad;
+    pad.buttons[13]!.pressed = false; pad.buttons[0]!.pressed = true;
+  });
+  await expect(page.getByRole('heading', { name: 'Squad Protocol', exact: true })).toBeVisible();
+});

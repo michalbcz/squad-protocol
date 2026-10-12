@@ -1,6 +1,6 @@
 import type { ClientMessage, ServerMessage } from './protocol';
 
-export type TransportEvent = { kind: 'open' } | { kind: 'close' } | { kind: 'message'; message: ServerMessage } | { kind: 'invalid' };
+export type TransportEvent = { kind: 'open' } | { kind: 'close'; code?: number } | { kind: 'message'; message: ServerMessage } | { kind: 'invalid' };
 export interface Transport {
   send(message: ClientMessage): void;
   subscribe(fn: (event: TransportEvent) => void): () => void;
@@ -21,7 +21,7 @@ export class WebSocketTransport implements Transport {
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     this.socket = new WebSocket(url);
     this.socket.addEventListener('open', () => this.emit({ kind: 'open' }));
-    this.socket.addEventListener('close', () => this.emit({ kind: 'close' }));
+    this.socket.addEventListener('close', (event) => this.emit({ kind: 'close', code: event.code }));
     this.socket.addEventListener('error', () => { /* The close event drives recovery. */ });
     this.socket.addEventListener('message', (event) => {
       try {
