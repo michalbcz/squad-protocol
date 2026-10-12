@@ -15,6 +15,7 @@
     "@sp/engine": "workspace:*",
     "@sp/i18n": "workspace:*",
     "@sp/input": "workspace:*",
+    "@vercel/analytics": "^2.0.1",
     "pixi.js": "^8.22.0"
   },
   "devDependencies": {
