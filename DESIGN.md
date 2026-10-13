@@ -120,10 +120,14 @@ Conditions are checked in the order the scenario lists them, after every command
 | Single player vs AI (AI uses only its own view) | ✅ |
 | Local hotseat with an opaque hand-off screen | ✅ |
 | Boot Camp tutorial ([ADR 0009](docs/adr/0009-boot-camp-curriculum-and-coach-tips.md)) | ✅ 4 missions; 📋 a 5th for inventory and explosives |
-| Online / LAN / tunnel multiplayer | 📋 [ADR 0005](docs/adr/0005-network-topology.md) |
+| LAN / shared HTTP-tunnel multiplayer | ✅ Two-player Kestrel rooms over WebSocket ([ADR 0012](docs/adr/0012-pause-multiplayer-commands-during-disconnection.md)); 📋 mDNS and automatic tunnels |
+| Browser-to-browser WebRTC | ✅ Manual offer/answer codes; optional player-supplied TURN relay ([ADR 0014](docs/adr/0014-use-browser-hosted-webrtc-with-manual-signaling.md)) |
 | Scenario editor | 📋 |
 
 ## 10. Onboarding & UX rules ✅
+
+- **Browser multiplayer:** Select Browser play, exchange the full offer and answer codes, then Blue starts once both peers connect. The browser host runs authority. Both tabs must remain open; refreshing or terminal connection loss requires a new game. Direct connection failure offers relay/Server-LAN guidance; camera/microphone access is not needed ([ADR 0014](docs/adr/0014-use-browser-hosted-webrtc-with-manual-signaling.md)).
+- **Server multiplayer:** Blue creates a room and shares an invite URL; Red joins, then Blue starts once both seats are connected. Both sides are human. Losing either connection pauses commands and reserves both seats. The same tab can reconnect/reload using a private credential. Five automatic retries are followed by manual retry; uncertain commands are never automatically replayed. Explicit quit closes the room for both sides. Rematches use a new room; host restart loses in-memory matches ([ADR 0012](docs/adr/0012-pause-multiplayer-commands-during-disconnection.md)).
 
 - **Preview before commit:**
   - touch: first tap previews, a second tap on the same tile confirms;

@@ -5,7 +5,7 @@
   import { randomTip } from '../tutorial/tips';
 
   type StartMode = 'skirmish' | 'hotseat';
-  let { onstart, onnavigate }: { onstart: (m: StartMode) => void; onnavigate: (s: 'codex' | 'settings' | 'refresher' | 'bootcamp') => void } = $props();
+  let { onstart, onnavigate }: { onstart: (m: StartMode) => void; onnavigate: (s: 'codex' | 'settings' | 'refresher' | 'bootcamp' | 'multiplayer') => void } = $props();
 
   const trained = $derived(settings.bootCamp.length >= BOOT_CAMP.length);
   const tip = randomTip();
@@ -26,8 +26,8 @@
     <button onclick={() => onstart('hotseat')}>
       {t('menu.hotseat')}<span class="sub">{t('menu.hotseat.sub')}</span>
     </button>
-    <button disabled title={t('menu.soon')}>
-      {t('menu.multiplayer')}<span class="sub">{t('menu.soon')}</span>
+    <button onclick={() => onnavigate('multiplayer')}>
+      {t('menu.multiplayer')}<span class="sub">{t('menu.multiplayer.sub')}</span>
     </button>
     <button disabled title={t('menu.soon')}>
       {t('menu.editor')}<span class="sub">{t('menu.soon')}</span>

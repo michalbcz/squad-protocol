@@ -7,7 +7,7 @@
     "dev": "pnpm --filter @sp/web dev",
     "build": "pnpm --filter @sp/web build",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit && pnpm --filter @sp/web check"
+    "typecheck": "tsc -p tsconfig.json --noEmit && pnpm --filter @sp/host check && pnpm --filter @sp/web check"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",

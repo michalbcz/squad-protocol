@@ -3,7 +3,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { GameController, type Mode } from '../lib/controller.svelte';
   import { locale, t } from '../lib/i18n.svelte';
-  import type { LocalSession } from '../lib/session';
+  import type { Session } from '../lib/session';
   import { settings } from '../lib/settings.svelte';
   import { Board } from '../render/board';
   import type { TutorialMission } from '../tutorial/steps';
@@ -16,7 +16,7 @@
     onquit,
     onrestart,
     onnext,
-  }: { session: LocalSession; mission: TutorialMission | null; onquit: () => void; onrestart: () => void; onnext: (() => void) | null } = $props();
+  }: { session: Session; mission: TutorialMission | null; onquit: () => void; onrestart: (() => void) | null; onnext: (() => void) | null } = $props();
 
   let host: HTMLDivElement;
   let device = $state<Device>('mouse');
@@ -109,8 +109,12 @@
     <button onclick={() => (menuOpen = true)} aria-label={t('hud.menu')}>☰</button>
     <div class="turn" aria-live="polite">
       {t('hud.turn', { turn: ctrl.view.turn })} · <strong style:color={ctrl.view.activeSide === 'red' ? 'var(--bad)' : 'var(--accent)'}>{sideName(ctrl.view.activeSide)}</strong>
-      {#if !ctrl.myTurn && !ctrl.view.over}<span class="muted"> · {t('hud.waiting')}</span>{/if}
+      {#if ctrl.connection !== 'connected'}<span role="status"> · {t(`net.status.${ctrl.connection}`)}</span>
+      {:else if !ctrl.myTurn && !ctrl.view.over}<span class="muted"> · {t('hud.waiting')}</span>{/if}
     </div>
+    {#if ctrl.connection === 'disconnected' && session.reconnect}
+      <button data-primary onclick={() => session.reconnect?.()}>{t('net.retry')}</button>
+    {/if}
     <div class="objective muted">{t(session.scenario.titleKey)}</div>
   </header>
 
@@ -151,7 +155,7 @@
       <button disabled={!ctrl.myTurn} onclick={() => ctrl.toggleNearestDoor()}>{t('action.door')}{#if glyph('toggleDoor')}<kbd>{glyph('toggleDoor')}</kbd>{/if}</button>
       <button disabled={!ctrl.myTurn} onclick={() => ctrl.action('nextUnit')}>{t('action.next')}{#if glyph('nextUnit')}<kbd>{glyph('nextUnit')}</kbd>{/if}</button>
     </div>
-    <button class="primary end" data-tut="end-turn" disabled={!ctrl.myTurn} onclick={() => ctrl.endTurn()}>
+    <button class="primary end" data-tut="end-turn" disabled={!ctrl.myTurn || ctrl.busy} onclick={() => ctrl.endTurn()}>
       {t('action.endTurn')}{#if glyph('endTurn')}<kbd>{glyph('endTurn')}</kbd>{/if}
     </button>
   </nav>
@@ -201,19 +205,19 @@
           <h2>{t('over.missionComplete')}</h2>
           <p class="muted">{onnext ? t('over.missionNext') : t('over.bootcampDone')}</p>
         {:else}
-          <h2>{ctrl.view.winner === null ? t('over.draw') : won || session.humans().length > 1 ? t('over.victory', { side: sideName(ctrl.view.winner) }) : t('over.defeat')}</h2>
+          <h2>{ctrl.view.winner === null ? t('over.draw') : won || (session.humans?.().length ?? 1) > 1 ? t('over.victory', { side: sideName(ctrl.view.winner) }) : t('over.defeat')}</h2>
           {#if mission}<p class="muted">{t('over.missionRetry')}</p>{/if}
         {/if}
         <div class="row">
           {#if mission && won && onnext}
             <!-- svelte-ignore a11y_autofocus -->
             <button class="primary" data-primary autofocus onclick={onnext}>{t('over.nextMission')}</button>
-            <button onclick={onrestart}>{t('over.again')}</button>
+            {#if onrestart}<button onclick={onrestart}>{t('over.again')}</button>{/if}
           {:else}
             <!-- svelte-ignore a11y_autofocus -->
-            <button class="primary" data-primary autofocus onclick={onrestart}>{t('over.again')}</button>
+            {#if onrestart}<button class="primary" data-primary autofocus onclick={onrestart}>{t('over.again')}</button>{/if}
           {/if}
-          <button onclick={onquit}>{mission ? t('over.bootcamp') : t('over.menu')}</button>
+          <button data-primary={onrestart ? undefined : true} onclick={onquit}>{mission ? t('over.bootcamp') : t('over.menu')}</button>
         </div>
       </div>
     </div>

@@ -2,20 +2,26 @@
   import { SCENARIOS, WEAPONS } from '@sp/content';
   import { onMount } from 'svelte';
   import { locale, t } from '../lib/i18n.svelte';
-  import { LocalSession } from '../lib/session';
+  import { LocalSession, type Session } from '../lib/session';
+  import { NetSession } from '../lib/net-session';
+  import { clearCredential, savedCredential, type SavedCredential } from '../lib/multiplayer-storage';
   import { REFRESHER_AFTER_DAYS, settings } from '../lib/settings.svelte';
   import { BOOT_CAMP, type TutorialMission } from '../tutorial/steps';
   import BootCamp from './BootCamp.svelte';
   import Codex from './Codex.svelte';
   import Game from './Game.svelte';
   import MainMenu from './MainMenu.svelte';
+  import Multiplayer from './Multiplayer.svelte';
   import Refresher from './Refresher.svelte';
   import Settings from './Settings.svelte';
 
-  type Screen = 'menu' | 'game' | 'codex' | 'settings' | 'refresher' | 'bootcamp';
+  type Screen = 'menu' | 'game' | 'codex' | 'settings' | 'refresher' | 'bootcamp' | 'multiplayer';
   type StartMode = 'skirmish' | 'hotseat';
   let screen = $state<Screen>('menu');
-  let session = $state<LocalSession | null>(null);
+  let session = $state<Session | null>(null);
+  let saved = $state<SavedCredential | null>(null);
+  const invite = new URLSearchParams(location.search).get('room') ?? '';
+  let networkUnsubscribe: (() => void) | null = null;
   let mission = $state<TutorialMission | null>(null);
   let lastMode = $state<StartMode>('skirmish');
 
@@ -28,7 +34,9 @@
   onMount(() => {
     settings.touch();
     for (const s of Object.values(SCENARIOS)) locale.addStrings(s.strings);
-    if (offerRefresher) screen = 'refresher';
+    saved = savedCredential();
+    if (invite || saved || new URLSearchParams(location.search).has('multiplayer')) screen = 'multiplayer';
+    else if (offerRefresher) screen = 'refresher';
   });
 
   function start(mode: StartMode) {
@@ -54,9 +62,21 @@
   const nextMission = $derived(mission ? BOOT_CAMP[BOOT_CAMP.indexOf(mission) + 1] ?? null : null);
 
   function quit() {
+    networkUnsubscribe?.(); networkUnsubscribe = null;
+    if (session instanceof NetSession) { clearCredential(); saved = null; history.replaceState(null, '', location.pathname + (new URLSearchParams(location.search).has('e2e') ? '?e2e' : '')); }
     session?.dispose();
     session = null;
     screen = mission ? 'bootcamp' : 'menu';
+  }
+
+  function startNetwork(next: NetSession) {
+    session?.dispose();
+    mission = null;
+    session = next;
+    networkUnsubscribe = next.client.subscribe((message) => {
+      if (message.kind === 'closed' || (message.kind === 'error' && ['roomNotFound', 'invalidToken', 'seatReplaced'].includes(message.code))) clearCredential();
+    });
+    screen = 'game';
   }
 </script>
 
@@ -67,13 +87,15 @@
     <MainMenu onstart={start} onnavigate={(s) => (screen = s)} />
   {:else if screen === 'bootcamp'}
     <BootCamp onstart={startMission} onback={() => (screen = 'menu')} />
+  {:else if screen === 'multiplayer'}
+    <Multiplayer {invite} {saved} onstart={startNetwork} onback={() => { saved = null; screen = 'menu'; }} />
   {:else if screen === 'game' && session}
     {#key session}
       <Game
         {session}
         {mission}
         onquit={quit}
-        onrestart={() => (mission ? startMission(mission) : start(lastMode))}
+        onrestart={session instanceof NetSession ? null : () => (mission ? startMission(mission) : start(lastMode))}
         onnext={nextMission ? () => startMission(nextMission) : null}
       />
     {/key}

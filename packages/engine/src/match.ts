@@ -14,6 +14,7 @@ export interface Replay {
 }
 
 type Listener = (side: SideId, view: PlayerView, events: GameEvent[]) => void;
+export interface MatchOptions { recordCommands?: boolean }
 
 /**
  * The single authority for a game. Hotseat, AI and network hosts all drive a Match;
@@ -23,12 +24,15 @@ export class Match {
   private stateValue: GameState;
   readonly commands: Command[] = [];
   private listeners = new Set<Listener>();
+  private readonly recordCommands: boolean;
 
   constructor(
     readonly scenario: Scenario,
     readonly weapons: Record<string, WeaponDef>,
     readonly seed: number,
+    options: MatchOptions = {},
   ) {
+    this.recordCommands = options.recordCommands ?? true;
     this.stateValue = createGame(scenario, weapons, seed);
   }
 
@@ -59,7 +63,7 @@ export class Match {
     const { state, result } = applyCommand(this.stateValue, cmd);
     if (!result.ok) return result;
     this.stateValue = state;
-    this.commands.push(cmd);
+    if (this.recordCommands) this.commands.push(cmd);
     for (const fn of this.listeners) {
       for (const side of state.sides) fn(side.id, viewFor(state, side.id), eventsFor(result.events, side.id, state));
     }
@@ -67,6 +71,7 @@ export class Match {
   }
 
   toReplay(): Replay {
+    if (!this.recordCommands) throw new Error('Replay recording is disabled');
     return {
       format: 'squad-protocol/replay',
       version: 1,
