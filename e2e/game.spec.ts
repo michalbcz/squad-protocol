@@ -97,6 +97,28 @@ test('keyboard-only: select, move, end turn', async ({ page, isMobile }) => {
   await expect(page.locator('.turn')).toContainText('Turn 2');
 });
 
+test('turning rotates the soldier silhouette through all eight facings', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'keyboard turn controls');
+  await page.goto('/?e2e');
+  await page.getByRole('button', { name: /Skirmish/ }).click();
+  await idle(page);
+  await page.waitForFunction(() => (window as any).__sp.board.ready);
+  const silhouettes = new Set<string>();
+  for (let facing = 0; facing < 8; facing++) {
+    const clip = await page.evaluate(() => {
+      const { board, ctrl } = (window as any).__sp;
+      const p = board.tileToScreen(ctrl.selected.pos);
+      // Crop the body: excludes compass pips, corner brackets and HP/AP indicators.
+      return { x: p.x - 12 * board.zoom, y: p.y + 12 * board.zoom, width: 24 * board.zoom, height: 24 * board.zoom };
+    });
+    silhouettes.add((await page.screenshot({ clip })).toString('base64'));
+    await page.screenshot({ path: `test-results/soldier-facing-${facing}.png` });
+    await page.keyboard.press('KeyR');
+    await idle(page);
+  }
+  expect(silhouettes.size).toBe(8);
+});
+
 test('hotseat hides the board between turns', async ({ page }) => {
   await page.goto('/?e2e');
   await page.getByRole('button', { name: /Hotseat/ }).click();
@@ -188,6 +210,7 @@ test('keyboard-only boot camp, then Esc to pause and back to the main menu', asy
   const tut = page.getByRole('complementary', { name: 'Tutorial' });
   await expect(tut).toContainText('Welcome to Boot Camp');
   await idle(page);
+  await page.waitForFunction(() => (window as any).__sp.board.ready);
   await page.keyboard.press('Enter'); // Continue
   await expect(tut).toContainText('press + or −');
   await page.keyboard.press('Equal');

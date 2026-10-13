@@ -88,7 +88,7 @@ interface Session {
   - It plays session updates through a serialized animation queue, with a pending counter driving `busy`.
   - It emits `UiSignal`s (`selected`, `previewed`, `mode`, `command`, `rejected`, `events`, user-only `camera`, synthetic `check`). The tutorial and coach tips consume these.
 - **`Board`** (`render/board.ts`) is PixiJS 8. Layers are tiles → overlay (path/target/cursor) → units → fog → FX.
-  - Original pixel silhouettes and patterned tiles use integer rectangles with antialiasing disabled; rendering remains based only on `PlayerView`.
+  - Eight directional pixel silhouettes (`render/soldier-sprite.ts`) and patterned tiles use integer rectangles with antialiasing disabled; rendering remains based only on `PlayerView`.
   - It handles pointer gestures: tap, drag-pan, pinch, wheel zoom and long-press.
   - It plays events through `play(events)`.
   - It draws **no text**: DOM tooltips are positioned with `tileToScreen`.

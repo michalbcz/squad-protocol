@@ -1,5 +1,6 @@
 import { Application, Container, Graphics } from 'pixi.js';
 import type { GameEvent, PlayerView, Tile, Unit, Vec } from '@sp/engine';
+import { SOLDIER_SPRITES } from './soldier-sprite';
 
 export const TILE = 48;
 
@@ -454,26 +455,6 @@ export class Board {
   }
 }
 
-// Original 16 × 16 helmet-and-rifle silhouette; each cell is a 3 px block.
-const SOLDIER = [
-  '................',
-  '......####......',
-  '.....######.....',
-  '.....##.........',
-  '.....#####......',
-  '......###.......',
-  '....######......',
-  '...########.....',
-  '...##.#########.',
-  '...##.####......',
-  '......####......',
-  '.....#####......',
-  '.....##.##......',
-  '....###.###.....',
-  '................',
-  '................',
-];
-
 function brackets(g: Graphics, x: number, y: number, color: number): void {
   for (const dx of [3, TILE - 15]) {
     for (const dy of [3, TILE - 15]) {
@@ -493,15 +474,14 @@ function drawToken(g: Graphics, u: Unit, selected: boolean, own: boolean): void 
     return;
   }
   // Knock out the terrain behind the silhouette so stipple never fills its gaps.
-  g.rect(6, 3, 36, 39).fill(0x000000);
-  const mirror = u.facing >= 5;
-  for (const [y, row] of SOLDIER.entries()) {
+  g.rect(3, 0, 42, 45).fill(0x000000);
+  for (const [y, row] of SOLDIER_SPRITES[u.facing]!.entries()) {
     for (let x = 0; x < row.length; x++) {
-      if (row[x] === '#') g.rect((mirror ? 15 - x : x) * 3, y * 3, 3, 3).fill(color);
+      if (row[x] === '#' || row[x] === '+') g.rect(x * 3, y * 3, 3, 3).fill(row[x] === '+' ? 0xffffff : color);
     }
   }
   if (selected) brackets(g, 0, 0, color);
-  // A separate compass pip keeps all eight facings unambiguous at small scales.
+  // The compass pip supplements the rotating body and bright rifle.
   const directions = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
   const [dx, dy] = directions[u.facing]!;
   g.rect(21 + dx! * 18, 21 + dy! * 18, 6, 6).fill(0xffffff);
