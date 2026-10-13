@@ -88,11 +88,13 @@ interface Session {
   - It plays session updates through a serialized animation queue, with a pending counter driving `busy`.
   - It emits `UiSignal`s (`selected`, `previewed`, `mode`, `command`, `rejected`, `events`, user-only `camera`, synthetic `check`). The tutorial and coach tips consume these.
 - **`Board`** (`render/board.ts`) is PixiJS 8. Layers are tiles → overlay (path/target/cursor) → units → fog → FX.
+  - Eight directional pixel silhouettes (`render/soldier-sprite.ts`) and patterned tiles use integer rectangles with antialiasing disabled; rendering remains based only on `PlayerView`.
   - It handles pointer gestures: tap, drag-pan, pinch, wheel zoom and long-press.
   - It plays events through `play(events)`.
   - It draws **no text**: DOM tooltips are positioned with `tileToScreen`.
 - **Svelte screens** (`ui/`): `App` (router; `?seed=N` makes games reproducible), `MainMenu` (with tip of the day), `BootCamp` (mission list and progress), `Game` (HUD, dialogs, mission completion), `Tutorial`, `CoachTips`, `Codex` (rules and tips, searchable), `Refresher`, `Settings`.
   - Dialog and tutorial primary buttons carry `data-primary`, so keyboard/gamepad `confirm` reaches them.
+- **Presentation:** shared black/saturated-color tokens in `ui/global.css`; the locally hosted VT323 font and its OFL license live in `public/fonts/`. The responsive HUD remains DOM-based ([ADR 0010](docs/adr/0010-use-an-original-8-bit-tactical-presentation.md)).
 - **Tutorial** (`tutorial/steps.ts`): `BOOT_CAMP` is a list of `TutorialMission`s (scenario id, steps, optional opponent script).
   - Steps are data-driven (`textKey`, optional `highlight`/`tile`, `until(signal, ctrl)`) and run on the real engine.
   - Text keys resolve to `${key}.${device}` when such a variant exists.

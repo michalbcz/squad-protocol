@@ -1,15 +1,16 @@
 import { Application, Container, Graphics } from 'pixi.js';
 import type { GameEvent, PlayerView, Tile, Unit, Vec } from '@sp/engine';
+import { SOLDIER_SPRITES } from './soldier-sprite';
 
 export const TILE = 48;
 
-const SIDE_COLORS: Record<string, number> = { blue: 0x4aa3ff, red: 0xff5a4f };
+const SIDE_COLORS: Record<string, number> = { blue: 0x00ffff, red: 0xff3333 };
 const TERRAIN: Record<Tile['terrain'], number> = {
-  floor: 0x3a4250,
-  grass: 0x2f4a32,
-  rubble: 0x4d463c,
-  water: 0x1d3c5c,
-  void: 0x0b0e13,
+  floor: 0x0000cc,
+  grass: 0x00cc00,
+  rubble: 0xcccc00,
+  water: 0x00cccc,
+  void: 0x000000,
 };
 
 export interface Preview {
@@ -60,8 +61,8 @@ export class Board {
   async mount(el: HTMLElement): Promise<void> {
     await this.app.init({
       resizeTo: el,
-      background: 0x0b0e13,
-      antialias: true,
+      background: 0x000000,
+      antialias: false,
       resolution: Math.min(window.devicePixelRatio || 1, 2),
       autoDensity: true,
     });
@@ -70,6 +71,12 @@ export class Board {
     this.app.canvas.setAttribute('aria-hidden', 'true');
     this.world.addChild(this.tiles, this.overlay, this.unitsLayer, this.fog, this.fx);
     this.app.stage.addChild(this.world);
+    this.app.renderer.on('resize', () => {
+      if (!this.ready) return;
+      this.fit();
+      const selected = this.view?.units.find((u) => u.id === this.selected);
+      if (selected) this.centerOn(selected.pos);
+    });
     this.app.ticker.add((t) => this.tick(t.deltaMS));
     this.bindPointer(this.app.canvas);
     this.ready = true;
@@ -114,7 +121,7 @@ export class Board {
       if (e.type === 'unitMoved') {
         await this.tweenToken(e.unitId, e.from, e.to, 110 / speed);
       } else if (e.type === 'shotFired') {
-        this.tracers.push({ from: e.from, to: e.impact, t: 0, color: e.reaction ? 0xffd34d : 0xfff2b3 });
+        this.tracers.push({ from: e.from, to: e.impact, t: 0, color: e.reaction ? 0xffff00 : 0xffffff });
         await wait(140 / speed);
       } else if (e.type === 'unitDamaged' || e.type === 'featureDestroyed') {
         const at = e.type === 'featureDestroyed' ? e.at : this.view?.units.find((u) => u.id === e.unitId)?.pos;
@@ -131,7 +138,18 @@ export class Board {
     }
     const s = this.app.screen;
     this.world.position.set(s.width / 2 - (p.x + 0.5) * TILE * this.zoom, s.height / 2 - (p.y + 0.5) * TILE * this.zoom);
+    this.frameMap();
     this.cb.onCamera(false);
+  }
+
+  private frameMap(): void {
+    if (!this.view) return;
+    const s = this.app.screen;
+    // Keep automatic centering within the map; leave room for the DOM turn strip.
+    const axis = (pos: number, length: number, start: number, end: number) =>
+      length <= end - start ? start + (end - start - length) / 2 : Math.max(end - length, Math.min(start, pos));
+    this.world.x = axis(this.world.x, this.view.map.width * TILE * this.zoom, 12, s.width - 12);
+    this.world.y = axis(this.world.y, this.view.map.height * TILE * this.zoom, 72, s.height - 12);
   }
 
   zoomBy(f: number, around?: { x: number; y: number }): void {
@@ -156,13 +174,14 @@ export class Board {
   private fit(): void {
     if (!this.view) return;
     const s = this.app.screen;
-    const z = Math.min(s.width / (this.view.map.width * TILE), s.height / (this.view.map.height * TILE));
+    const z = Math.min((s.width - 24) / (this.view.map.width * TILE), (s.height - 84) / (this.view.map.height * TILE));
     this.zoom = Math.max(0.4, Math.min(1.4, z * 0.95));
     this.world.scale.set(this.zoom);
     this.world.position.set(
       (s.width - this.view.map.width * TILE * this.zoom) / 2,
       (s.height - this.view.map.height * TILE * this.zoom) / 2,
     );
+    this.frameMap();
     this.cb.onCamera(false);
   }
 
@@ -181,23 +200,54 @@ export class Board {
         const t = v.map.tiles[y * v.map.width + x]!;
         const px = x * TILE;
         const py = y * TILE;
-        g.rect(px, py, TILE, TILE).fill(TERRAIN[t.terrain]);
-        if (t.terrain !== 'void') g.rect(px, py, TILE, TILE).stroke({ width: 1, color: 0x000000, alpha: 0.18 });
-        if (t.terrain === 'rubble') {
-          for (let i = 0; i < 4; i++) g.circle(px + 10 + ((i * 13 + x * 7) % 30), py + 12 + ((i * 17 + y * 5) % 26), 3).fill(0x6a6052);
+        g.rect(px, py, TILE, TILE).fill(0x000000);
+        const ink = TERRAIN[t.terrain];
+        if (t.terrain === 'grass') {
+          for (let row = 0; row < 4; row++) {
+            for (let col = 0; col < 4; col++) {
+              g.rect(px + col * 12 + (row % 2) * 6, py + row * 12 + 3, 3, 3).fill(ink);
+            }
+          }
+        } else if (t.terrain === 'floor') {
+          for (let i = 0; i < TILE; i += 6) {
+            g.rect(px + i, py, 3, 3).rect(px, py + i, 3, 3).fill(ink);
+          }
+        } else if (t.terrain === 'rubble') {
+          for (let i = 0; i < 7; i++) {
+            g.rect(px + 3 + ((i * 5 + x) % 13) * 3, py + 3 + ((i * 7 + y) % 13) * 3, 6, 3).fill(ink);
+          }
+        } else if (t.terrain === 'water') {
+          for (let row = 0; row < 4; row++) {
+            for (let col = 0; col < 2; col++) {
+              const wx = px + col * 24 + (row % 2) * 6;
+              g.rect(wx, py + row * 12 + 3, 12, 3).rect(wx + 12, py + row * 12 + 6, 6, 3).fill(ink);
+            }
+          }
         }
         if (t.feature === 'wall') {
-          g.rect(px, py, TILE, TILE).fill(0x8a93a3);
-          g.rect(px, py, TILE, 6).fill(0xb8c0cc);
-          g.rect(px, py + TILE - 4, TILE, 4).fill(0x5c6370);
+          g.rect(px, py, TILE, TILE).fill(0xaaaaaa);
+          for (let row = 0; row < 4; row++) {
+            g.rect(px, py + row * 12, TILE, 3).fill(0x000000);
+            for (let col = 0; col < 2; col++) {
+              g.rect(px + col * 24 + (row % 2) * 12, py + row * 12, 3, 12).fill(0x000000);
+            }
+          }
         } else if (t.feature === 'crate') {
-          g.roundRect(px + 7, py + 7, TILE - 14, TILE - 14, 4).fill(0x8a6a3a).stroke({ width: 2, color: 0x5e4626 });
-          g.moveTo(px + 9, py + 9).lineTo(px + TILE - 9, py + TILE - 9).stroke({ width: 2, color: 0x5e4626 });
+          g.rect(px + 6, py + 9, 36, 30).fill(0x00cccc);
+          g.rect(px + 9, py + 12, 30, 24).fill(0x000000);
+          g.rect(px + 12, py + 15, 24, 3).rect(px + 12, py + 30, 24, 3).fill(0x00cccc);
+          g.rect(px + 21, py + 21, 6, 6).fill(0x00ffff);
         } else if (t.feature === 'window') {
-          g.rect(px, py + TILE / 2 - 5, TILE, 10).fill({ color: 0x9fdcff, alpha: 0.75 });
+          g.rect(px, py + 15, TILE, 18).fill(0xaaaaaa);
+          g.rect(px + 3, py + 18, 42, 12).fill(0x000000);
+          g.rect(px + 6, py + 21, 15, 6).rect(px + 27, py + 21, 15, 6).fill(0x00ffff);
         } else if (t.feature === 'door') {
-          if (t.doorOpen) g.rect(px + 2, py + 2, 8, TILE - 4).fill(0xc79a4a);
-          else g.rect(px + 2, py + TILE / 2 - 7, TILE - 4, 14).fill(0xc79a4a).stroke({ width: 2, color: 0x7a5a24 });
+          g.rect(px + 3, py + 6, 3, 36).rect(px + 42, py + 6, 3, 36).fill(0xffff00);
+          if (!t.doorOpen) {
+            g.rect(px + 9, py + 18, 30, 12).fill(0xcccc00);
+            g.rect(px + 12, py + 21, 24, 3).fill(0xffff00);
+            g.rect(px + 30, py + 24, 3, 3).fill(0x000000);
+          }
         }
       }
     }
@@ -243,18 +293,19 @@ export class Board {
     if (path && costs) {
       path.forEach((p, i) => {
         const ok = (costs[i] ?? Infinity) <= (affordable ?? 0);
-        g.circle((p.x + 0.5) * TILE, (p.y + 0.5) * TILE, i === path.length - 1 ? 9 : 5).fill({ color: ok ? 0x7cf29a : 0xff6b6b, alpha: 0.9 });
+        const size = i === path.length - 1 ? 12 : 6;
+        g.rect((p.x + 0.5) * TILE - size / 2, (p.y + 0.5) * TILE - size / 2, size, size).fill(ok ? 0x00ff00 : 0xff3333);
       });
     }
     const sel = this.view?.units.find((u) => u.id === this.selected);
     if (target && sel) {
       g.moveTo((sel.pos.x + 0.5) * TILE, (sel.pos.y + 0.5) * TILE)
         .lineTo((target.x + 0.5) * TILE, (target.y + 0.5) * TILE)
-        .stroke({ width: 2, color: 0xffd34d, alpha: 0.7 });
-      g.circle((target.x + 0.5) * TILE, (target.y + 0.5) * TILE, TILE * 0.42).stroke({ width: 3, color: 0xffd34d });
+        .stroke({ width: 3, color: 0xffff00 });
+      brackets(g, target.x * TILE, target.y * TILE, 0xff3333);
     }
     if (this.cursor) {
-      g.rect(this.cursor.x * TILE + 2, this.cursor.y * TILE + 2, TILE - 4, TILE - 4).stroke({ width: 3, color: 0xffffff, alpha: 0.85 });
+      brackets(g, this.cursor.x * TILE, this.cursor.y * TILE, 0xffffff);
     }
   }
 
@@ -263,7 +314,7 @@ export class Board {
     this.clock += dt;
     if (this.hint) {
       const a = 0.45 + 0.4 * Math.sin(this.clock / 220);
-      g.circle((this.hint.x + 0.5) * TILE, (this.hint.y + 0.5) * TILE, TILE * 0.48).stroke({ width: 4, color: 0xffd34d, alpha: a });
+      g.rect(this.hint.x * TILE + 3, this.hint.y * TILE + 3, TILE - 6, TILE - 6).stroke({ width: 3, color: 0xffff00, alpha: a });
     }
     this.tracers = this.tracers.filter((tr) => (tr.t += dt) < 260);
     for (const tr of this.tracers) {
@@ -274,7 +325,10 @@ export class Board {
     }
     this.flashes = this.flashes.filter((f) => (f.t += dt) < 300);
     for (const f of this.flashes) {
-      g.circle((f.at.x + 0.5) * TILE, (f.at.y + 0.5) * TILE, 8 + f.t / 12).fill({ color: 0xff8844, alpha: 1 - f.t / 300 });
+      const size = 6 + Math.floor(f.t / 60) * 3;
+      const x = (f.at.x + 0.5) * TILE;
+      const y = (f.at.y + 0.5) * TILE;
+      g.rect(x - size, y - 3, size * 2, 6).rect(x - 3, y - size, 6, size * 2).fill({ color: 0xffff00, alpha: 1 - f.t / 300 });
     }
   }
 
@@ -401,30 +455,42 @@ export class Board {
   }
 }
 
+function brackets(g: Graphics, x: number, y: number, color: number): void {
+  for (const dx of [3, TILE - 15]) {
+    for (const dy of [3, TILE - 15]) {
+      g.rect(x + dx, y + dy + (dy === 3 ? 0 : 9), 12, 3)
+        .rect(x + dx + (dx === 3 ? 0 : 9), y + dy, 3, 12).fill(color);
+    }
+  }
+}
+
 function drawToken(g: Graphics, u: Unit, selected: boolean, own: boolean): void {
   g.clear();
-  const c = TILE / 2;
-  const color = SIDE_COLORS[u.side] ?? 0xcccccc;
+  const color = selected ? 0xffff00 : SIDE_COLORS[u.side] ?? 0xffffff;
   if (!u.alive) {
-    g.moveTo(c - 10, c - 10).lineTo(c + 10, c + 10).moveTo(c + 10, c - 10).lineTo(c - 10, c + 10).stroke({ width: 4, color, alpha: 0.6 });
+    for (let i = 0; i < 6; i++) {
+      g.rect(15 + i * 3, 15 + i * 3, 3, 3).rect(30 - i * 3, 15 + i * 3, 3, 3).fill(color);
+    }
     return;
   }
-  if (selected) g.circle(c, c, TILE * 0.46).stroke({ width: 3, color: 0xffffff });
-  g.circle(c, c, TILE * 0.32).fill(color).stroke({ width: 2, color: 0x0b0e13 });
-  // Facing wedge.
-  const ang = (u.facing * Math.PI) / 4 - Math.PI / 2;
-  const tip = { x: c + Math.cos(ang) * TILE * 0.44, y: c + Math.sin(ang) * TILE * 0.44 };
-  const l = { x: c + Math.cos(ang - 0.5) * TILE * 0.26, y: c + Math.sin(ang - 0.5) * TILE * 0.26 };
-  const r = { x: c + Math.cos(ang + 0.5) * TILE * 0.26, y: c + Math.sin(ang + 0.5) * TILE * 0.26 };
-  g.poly([tip.x, tip.y, l.x, l.y, r.x, r.y]).fill(0xffffff);
-  // HP bar.
-  const w = TILE * 0.7;
-  g.rect(c - w / 2, TILE - 7, w, 4).fill(0x000000);
-  g.rect(c - w / 2, TILE - 7, (w * u.hp) / u.maxHp, 4).fill(u.hp / u.maxHp > 0.5 ? 0x7cf29a : u.hp / u.maxHp > 0.25 ? 0xffd34d : 0xff6b6b);
+  // Knock out the terrain behind the silhouette so stipple never fills its gaps.
+  g.rect(3, 0, 42, 45).fill(0x000000);
+  for (const [y, row] of SOLDIER_SPRITES[u.facing]!.entries()) {
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] === '#' || row[x] === '+') g.rect(x * 3, y * 3, 3, 3).fill(row[x] === '+' ? 0xffffff : color);
+    }
+  }
+  if (selected) brackets(g, 0, 0, color);
+  // The compass pip supplements the rotating body and bright rifle.
+  const directions = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+  const [dx, dy] = directions[u.facing]!;
+  g.rect(21 + dx! * 18, 21 + dy! * 18, 6, 6).fill(0xffffff);
+  g.rect(9, 45, 30, 3).fill(0x000000);
+  g.rect(9, 45, Math.ceil(10 * u.hp / u.maxHp) * 3, 3).fill(u.hp / u.maxHp > 0.5 ? 0x00ff00 : u.hp / u.maxHp > 0.25 ? 0xffff00 : 0xff3333);
   if (own) {
-    // AP pip ring hint.
-    const frac = u.ap / u.maxAp;
-    g.moveTo(c, c - TILE * 0.38).arc(c, c, TILE * 0.38, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac).stroke({ width: 2, color: 0xffffff, alpha: 0.5 });
+    for (let i = 0; i < 4; i++) {
+      g.rect(0, 15 + i * 6, 3, 3).fill(u.ap / u.maxAp > i / 4 ? 0x00ffff : 0x005555);
+    }
   }
 }
 

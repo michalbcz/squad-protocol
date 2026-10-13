@@ -47,20 +47,24 @@
 <style>
   .menu {
     height: 100%;
-    display: grid;
-    place-content: center;
-    gap: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
     padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-    background: radial-gradient(ellipse at 30% 20%, #16263d 0%, var(--bg) 60%);
+    background: radial-gradient(#006600 1px, transparent 1px) 0 0 / 12px 12px, #000;
+    border: 6px double var(--warn);
     overflow-y: auto;
   }
-  header { text-align: center; }
-  h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.5rem); letter-spacing: 0.08em; text-transform: uppercase; }
-  nav { display: flex; flex-direction: column; gap: 10px; padding: 16px; width: min(420px, 92vw); }
-  nav > button { display: flex; flex-direction: column; align-items: flex-start; padding-block: 10px; text-align: start; }
+  .menu > * { flex-shrink: 0; width: 100%; max-width: 500px; }
+  /* Auto margins center short menus without pushing overflowing content above the scroll origin. */
+  header { margin-block-start: auto; text-align: center; background: #000; padding: 12px; border-block: 3px solid var(--warn); }
+  h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.5rem); letter-spacing: 0.04em; text-transform: uppercase; }
+  nav { display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+  nav > button { display: flex; flex-direction: column; align-items: flex-start; padding-block: 6px; text-align: start; }
   .sub { font-size: 0.8rem; color: var(--muted); }
   .row { display: flex; gap: 8px; flex-wrap: wrap; }
-  .row button { flex: 1; }
-  .tip { width: min(420px, 92vw); padding: 10px 14px; font-size: 0.85rem; }
+  .row button { flex: 1 1 130px; }
+  .tip { margin-block-end: auto; padding: 10px 14px; font-size: 0.85rem; }
   .tip p { margin: 4px 0 0; color: var(--muted); line-height: 1.4; }
 </style>

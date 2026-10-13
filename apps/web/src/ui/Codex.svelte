@@ -42,7 +42,7 @@
   .codex { height: 100%; overflow-y: auto; padding: max(16px, env(safe-area-inset-top)) 16px 32px; max-width: 760px; margin: 0 auto; }
   header { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; background: var(--bg); padding-block: 8px; }
   h1 { margin: 0; flex: 1; }
-  input { font: inherit; min-height: var(--hit); padding-inline: 12px; border-radius: 8px; border: 1px solid var(--line); background: #0b0f15; color: var(--text); width: min(260px, 100%); }
+  input { font: inherit; min-height: var(--hit); padding-inline: 12px; border-radius: 0; border: 1px solid var(--line); background: #000; color: var(--text); width: min(260px, 100%); }
   .list { display: grid; gap: 10px; }
   article { padding: 12px 16px; }
   h3 { margin: 0 0 4px; font-size: 1.05rem; }
