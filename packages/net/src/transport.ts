@@ -1,6 +1,6 @@
 import type { ClientMessage, ServerMessage } from './protocol';
 
-export type TransportEvent = { kind: 'open' } | { kind: 'close'; code?: number } | { kind: 'message'; message: ServerMessage } | { kind: 'invalid' };
+export type TransportEvent = { kind: 'open' } | { kind: 'suspend' } | { kind: 'resume' } | { kind: 'close'; code?: number } | { kind: 'message'; message: ServerMessage } | { kind: 'invalid' };
 export interface Transport {
   send(message: ClientMessage): void;
   subscribe(fn: (event: TransportEvent) => void): () => void;

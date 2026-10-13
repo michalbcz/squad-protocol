@@ -14,12 +14,22 @@ just          # list all recipes
 
 ## Multiplayer
 
+For two browsers on the public/static website, choose **Multiplayer → Browser play (WebRTC)**:
+
+1. The host selects **Host in this browser** and sends the complete offer code to their friend in chat.
+2. The friend pastes it into **Friend’s offer code**, selects **Create answer**, and sends the complete answer back.
+3. The host pastes it into **Friend’s answer code** and selects **Connect friend**, then **Start match** once both players connect.
+
+Keep both tabs open. No game/signaling server, camera or microphone is required. Refreshing a tab or a terminal connection failure requires a new code exchange/game. Direct connections may need a TURN relay on restrictive networks: enter your provider's relay address/username/password on both devices before creating codes. These credentials are not saved. Both friends must be able to open the deployed website (including any Vercel preview access protection).
+
+For Node hosting, choose **Multiplayer → Server / LAN**:
+
 ```sh
 just host          # build and host on port 8080
 # or: just host 9000
 ```
 
-Open a printed **LAN URL** on both devices (use the LAN URL on the host device too, so the invite is reachable). Choose **Multiplayer → Create room**, share the invite link, and select **Start match** once both players connect. Keep the host running. Use the same tab to refresh/reconnect; quitting closes the room for both sides. Games use Kestrel with two human squads. Host state is in memory; restarting the host ends its rooms.
+Open a printed **LAN URL** on both devices (use the LAN URL on the host device too, so the invite is reachable). Choose **Multiplayer → Server / LAN → Create room**, share the invite link, and select **Start match** once both players connect. Keep the host running. Use the same tab to refresh/reconnect; quitting closes the room for both sides. Games use Kestrel with two human squads. Host state is in memory; restarting the host ends its rooms.
 
 To share across networks, keep the host running and start a tunnel in another terminal:
 
@@ -27,7 +37,7 @@ To share across networks, keep the host running and start a tunnel in another te
 cloudflared tunnel --url http://localhost:8080
 ```
 
-Open the printed HTTPS tunnel URL on the creator's device, create a room there, then share its invite link. Assets and WebSocket traffic use the tunnel origin. `cloudflared` is optional and installed separately. Automatic tunnels, LAN discovery and browser-only WebRTC remain planned. Desktop and mobile browsers can play now.
+Open the printed HTTPS tunnel URL on the creator's device, create a room there, then share its invite link. Assets and WebSocket traffic use the tunnel origin. `cloudflared` is optional and installed separately. Automatic tunnels, LAN discovery and automatic WebRTC signaling remain planned. Desktop and mobile browsers can play now.
 
 ## Docs
 
@@ -60,7 +70,7 @@ The UI only talks to a `Session` (`apps/web/src/lib/session.ts`). `LocalSession`
 | 3. Inventory, explosives, buy phase, saves/replays | ⏳ replays exist in the engine (`Match.toReplay`); the rest is not started |
 | 4. AI | 🟡 basic utility AI (fair: view-only); no cover scoring or Web Worker yet |
 | 5. Tutorial, refresher, codex | ✅ 4-mission Boot Camp, coach tips, tips & tricks, refresher, searchable codex (📋 explosives mission once those rules exist) |
-| 6. Networking (WS host, LAN mDNS, cloudflared, WebRTC) | 🟡 Two-player WS rooms, LAN/direct URL, manual HTTP tunnels and reconnect; mDNS, automatic tunnels and WebRTC remain planned |
+| 6. Networking (WS host, LAN mDNS, cloudflared, WebRTC) | 🟡 Two-player WS rooms, LAN/direct URL, manual HTTP tunnels, reconnect and browser WebRTC code exchange; mDNS, automatic tunnels and automatic signaling remain planned |
 | 7. Scenario editor | ❌ |
 | 8. Tauri/Steam, Capacitor wrappers, art/audio | ❌ (the web build already uses a relative `base` for wrapping) |
 

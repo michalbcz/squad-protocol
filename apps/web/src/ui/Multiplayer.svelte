@@ -5,6 +5,7 @@
   import { t, locale } from '../lib/i18n.svelte';
   import { NetSession } from '../lib/net-session';
   import { clearCredential, saveCredential, type SavedCredential } from '../lib/multiplayer-storage';
+  import WebRtcLobby from './WebRtcLobby.svelte';
 
   let { invite, saved, onstart, onback }: { invite: string; saved: SavedCredential | null; onstart: (session: NetSession) => void; onback: () => void } = $props();
   let address = $state(location.origin);
@@ -13,7 +14,8 @@
   let status = $state<ConnectionStatus>('disconnected');
   let error = $state<NetError | null>(null);
   let busy = $state(false);
-  let root: HTMLElement;
+  let root = $state<HTMLElement>(null!);
+  let mode = $state<'choose' | 'server' | 'rtc'>('choose');
   let client = $state<MultiplayerClient | null>(null);
   let unsubscribe: (() => void) | null = null;
   let transferred = false;
@@ -31,7 +33,7 @@
       if (host !== location.origin) {
         const target = new URL('/', host);
         if (new URLSearchParams(location.search).has('e2e')) target.searchParams.set('e2e', '');
-        target.searchParams.set('multiplayer', '1');
+        target.searchParams.set('multiplayer', 'server');
         if (code) target.searchParams.set('room', code.trim().toUpperCase());
         location.assign(target);
         return;
@@ -65,9 +67,10 @@
   onMount(() => {
     address = saved?.host ?? location.origin;
     code = invite;
-    connect(saved ?? undefined);
+    if (invite || saved || new URLSearchParams(location.search).get('multiplayer') === 'server') { mode = 'server'; connect(saved ?? undefined); }
     const hub = createInputHub(window);
     hub.on((action) => {
+      if (mode === 'rtc') return;
       if (action === 'cancel') back();
       if (action === 'confirm') {
         const focused = document.activeElement;
@@ -84,9 +87,19 @@
   });
 </script>
 
+{#if mode === 'rtc'}
+  <WebRtcLobby {onstart} onback={() => { mode = 'choose'; }} />
+{:else}
 <main class="multiplayer" bind:this={root}>
   <header><button onclick={back}>← {t('common.back')}</button><h1>{t('menu.multiplayer')}</h1></header>
-  {#if room}
+  {#if mode === 'choose'}
+    <section class="panel lobby">
+      <button class="primary" data-primary onclick={() => mode = 'rtc'}>{t('rtc.browser')}</button>
+      <p class="muted">{t('rtc.browserSub')}</p>
+      <button onclick={() => { mode = 'server'; connect(); }}>{t('rtc.server')}</button>
+      <p class="muted">{t('rtc.serverSub')}</p>
+    </section>
+  {:else if room}
     <section class="panel lobby">
       <h2>{t('net.room', { code: room.room })}</h2>
       <p>{t('net.side', { side: t(`side.${room.side}`) })}</p>
@@ -112,6 +125,7 @@
   {#if status === 'disconnected' && room}<button data-primary onclick={() => client?.reconnect()}>{t('net.retry')}</button>{/if}
   {#if error}<p role="alert">{t(`error.${error}`)}</p>{/if}
 </main>
+{/if}
 
 <style>
   .multiplayer { height: 100%; overflow-y: auto; padding: max(16px, env(safe-area-inset-top)) 16px 32px; max-width: 640px; margin: 0 auto; }

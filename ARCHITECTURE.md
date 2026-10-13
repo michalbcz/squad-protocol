@@ -13,7 +13,7 @@ Status tags: ✅ implemented · 🟡 partial · 📋 planned
   mouse,    │               previews)          │          │ PlayerView + redacted events     │
   keys,pad) └──────────────────────────────────┼──────────┼──────────────────────────────────┘
                                                ▼          │
-                              LocalSession ✅ / NetSession ✅ (Transport: WS ✅ · WebRTC/loopback 📋)
+                              LocalSession ✅ / NetSession ✅ (Transport: WS/WebRTC/loopback ✅)
                                                │          │
                                                ▼          │
                                      Match (authority) ───┘  ◀── @sp/ai (plays from its view only)
@@ -34,7 +34,7 @@ Key ideas:
 | `packages/content` | ✅ | Weapons, scenario JSON (validated at import) | engine |
 | `packages/i18n` | ✅ | ICU MessageFormat runtime, `en`/`cs` catalogs, `en-XA` pseudo-locale, RTL detection, locale negotiation | `intl-messageformat` |
 | `packages/input` | ✅ | Semantic `Action`s, key bindings (`KeyboardEvent.code`), gamepad polling, device tracking, focus handling | – (DOM types) |
-| `packages/net` | ✅ | Protocol v1, strict client schemas, Transport/WebSocketTransport, MultiplayerClient; 📋 WebRTC/loopback | engine, zod |
+| `packages/net` | ✅ | Protocol v1, strict client schemas, portable Rooms authority, WS/WebRTC/loopback transports, versioned signaling, MultiplayerClient | engine, zod |
 | `apps/web` | ✅ | Svelte UI, Pixi renderer, sessions, tutorial, settings | all packages, `pixi.js`, `svelte` |
 | `apps/host` | ✅ | Node HTTP/WS host, bounded rooms, private seats, heartbeat, static web build; 📋 mDNS | engine, content, net, ws |
 | `apps/desktop` | 📋 | Tauri 2 (Win/macOS/Linux/Steam), host + cloudflared sidecars | web build |
@@ -57,7 +57,7 @@ Key ideas:
 
 ## 4. Trust model & information flow ✅
 
-- Only the authority (`Match`, inside `LocalSession` or the Node host) sees `GameState`.
+- Only the authority (`Match`, inside `LocalSession`, the Node host, or the hosting browser) sees `GameState`.
 - `viewFor(state, side)` returns own units, visible enemies (AP zeroed), per-tile visibility and the public map.
 - `eventsFor` drops unwitnessed events and redacts hidden origins, ids and destinations.
 - Commands entering a session are deep-copied as JSON, exactly like a network wire, and UI code snapshots `$state` proxies before sending.
@@ -126,6 +126,7 @@ interface Session {
 | Replay `squad-protocol/replay` | 1 | `packages/engine/src/match.ts` (scenario + weapons + seed + commands) |
 | Settings / bindings | unversioned | localStorage `sp.settings`, `sp.bindings` |
 | Net protocol `version` | 1 | packages/net/src/protocol.ts; initial format, unsupported versions rejected |
+| WebRTC signaling squad-protocol/webrtc-signal | 1 | bounded offer/answer codes; initial format, unsupported versions rejected |
 | Private multiplayer credential | 1 | sessionStorage sp.multiplayer: host, room, token; invalid records ignored |
 
 Changing any versioned format requires a version bump, a migration path and an ADR.
@@ -136,7 +137,9 @@ Changing any versioned format requires a version bump, a migration path and an A
 - Rooms contain two seats, private random tokens, per-seat result caches and an authoritative Match after the creator starts. Socket bindings enforce command identity; revisions reject stale commands. No raw success result, full scenario, RNG state or replay crosses the wire. Metadata contains id/title/briefing/translations only.
 - Commands pause when either side disconnects. The client retries five times, then exposes manual retry; same-tab reload resumes its seat. Leaving closes the room for both clients. Resuming an occupied seat terminates recovery in the old tab; it cannot repeatedly evict the replacement. The latest 128 request results per seat are cached; old repeated commands also fail revision checks.
 - Limits: 64 KiB frames, 100 rooms, 256 sockets, 120 messages/minute/socket, 1 MiB outgoing backlog. A 15-second ping loop detects dead peers; rooms expire after 30 minutes without connected seats. State is in memory; host restarts end matches.
-- 📋 mDNS, automatic cloudflared/QR, WebRTC/manual signaling, loopback transport, desktop sidecars and mobile wrappers. Mobile browsers can join today.
+- Browser mode uses the same portable Rooms authority, with Blue connected through LoopbackTransport and Red through ordered reliable RTCDataChannel/Transport. Offer/answer codes include fully gathered candidates, with validation by role/room and bounded setup. No /ws request is made until Server/LAN is selected. BrowserPeer owns authority/channel resources outside UI/controller state ([ADR 0014](docs/adr/0014-use-browser-hosted-webrtc-with-manual-signaling.md)).
+- Browser signaling uses manual chat exchange and a public STUN endpoint. Optional player-supplied TURN details are kept in memory only. Temporary channel interruption pauses commands and resumes the same seat with a snapshot; terminal failures close the browser room. Refresh does not recover a browser-hosted game; both tabs must remain open. Node credential/resume behavior is unchanged.
+- 📋 mDNS, automatic cloudflared/QR, automatic WebRTC signaling, desktop sidecars and mobile wrappers. Mobile browsers can join today.
 
 ## 11. Platforms 📋
 
@@ -149,6 +152,6 @@ Changing any versioned format requires a version bump, a migration path and an A
 | --- | --- |
 | Type-check (tsc + svelte-check) | `just typecheck` |
 | Unit tests: rules, LOS, redaction, determinism, AI-vs-AI legality, i18n coverage, bindings, tutorial data/scripts, protocol validation and real WebSocket room/client/privacy tests (`packages/*/test`, `apps/*/test`) | `just test` |
-| E2E: Boot Camp (mouse + keyboard, mission list, scripted ambush), coach tips, codex tips, hotseat opacity, touch tap-confirm, pseudo-locale, focus trap, two-browser multiplayer (desktop/touch), reload recovery, LAN HTTP crypto, host navigation | `just e2e` |
+| E2E: Boot Camp (mouse + keyboard, mission list, scripted ambush), coach tips, codex tips, hotseat opacity, touch tap-confirm, pseudo-locale, focus trap, two-browser multiplayer (desktop/touch), reload recovery, LAN HTTP crypto, host navigation, real data-channel code exchange on static web hosting | `just e2e` |
 | All of the above (also in CI, `.github/workflows/ci.yml`) | `just check` |
 | Balance report | `just balance` |

@@ -7,7 +7,7 @@ export class NetSession implements Session {
   private currentView: PlayerView;
   private listeners = new Set<(update: SessionUpdate) => void>();
   private unsubscribe: () => void;
-  constructor(readonly client: MultiplayerClient) {
+  constructor(readonly client: MultiplayerClient, private onDispose?: () => void) {
     if (!client.snapshot) throw new Error('Network session requires a snapshot');
     this.scenario = client.snapshot.scenario;
     this.currentView = client.snapshot.view;
@@ -25,7 +25,7 @@ export class NetSession implements Session {
   subscribe(fn: (update: SessionUpdate) => void): () => void { this.listeners.add(fn); return () => this.listeners.delete(fn); }
   acceptHandoff(): void {}
   reconnect(): void { this.client.reconnect(); }
-  dispose(): void { this.unsubscribe(); this.listeners.clear(); this.client.leave(); }
+  dispose(): void { this.unsubscribe(); this.listeners.clear(); this.client.leave(); this.onDispose?.(); }
   private receive(message: ClientUpdate): void {
     if (message.kind === 'snapshot' || message.kind === 'update') {
       this.currentView = message.view;

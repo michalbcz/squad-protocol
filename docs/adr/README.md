@@ -17,3 +17,4 @@ Architecture and game-design decisions, newest last. Create one with `just adr "
 | [0011](0011-ship-versioned-websocket-rooms-with-private-seats.md) | Ship versioned WebSocket rooms with private seats | Architecture | Accepted |
 | [0012](0012-pause-multiplayer-commands-during-disconnection.md) | Pause multiplayer commands during disconnection | Game design | Accepted |
 | [0013](0013-disable-replay-recording-for-hosted-matches.md) | Disable replay recording for hosted matches | Architecture | Accepted |
+| [0014](0014-use-browser-hosted-webrtc-with-manual-signaling.md) | Use browser-hosted WebRTC with manual signaling | Both | Accepted |

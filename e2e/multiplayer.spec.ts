@@ -9,6 +9,7 @@ test('two browsers join, play alternate turns, resume after reload and leave', a
     for (const tab of [page, guest]) await tab.addInitScript(() => localStorage.setItem('sp.settings', JSON.stringify({ locale: 'en', coach: false })));
     await page.goto(`${host}/?e2e`);
     await page.getByRole('button', { name: /Multiplayer/ }).click();
+  await page.getByRole('button', { name: 'Server / LAN', exact: true }).click();
     await page.getByRole('button', { name: 'Create room', exact: true }).click();
     const link = page.getByLabel('Invite link');
     await expect(link).toHaveValue(/room=[A-Z0-9]{8}/);
@@ -57,6 +58,7 @@ test('creates a room on HTTP when crypto.randomUUID is unavailable', async ({ pa
   });
   await page.goto(`${host}/?e2e`);
   await page.getByRole('button', { name: /Multiplayer/ }).click();
+  await page.getByRole('button', { name: 'Server / LAN', exact: true }).click();
   await page.getByRole('button', { name: 'Create room', exact: true }).click();
   await expect(page.getByLabel('Invite link')).toHaveValue(/room=[A-Z0-9]{8}/);
 });
@@ -65,9 +67,10 @@ test('opens the selected host before connecting from the standalone web page', a
   await page.addInitScript(() => localStorage.setItem('sp.settings', JSON.stringify({ locale: 'en', coach: false })));
   await page.goto('/?e2e');
   await page.getByRole('button', { name: /Multiplayer/ }).click();
+  await page.getByRole('button', { name: 'Server / LAN', exact: true }).click();
   await page.getByLabel('Host address').fill(host);
   await page.getByRole('button', { name: 'Connect', exact: true }).click();
-  await expect(page).toHaveURL(`${host}/?e2e=&multiplayer=1`);
+  await expect(page).toHaveURL(`${host}/?e2e=&multiplayer=server`);
   await page.getByRole('button', { name: 'Create room', exact: true }).click();
   await expect(page.getByLabel('Invite link')).toHaveValue(/room=[A-Z0-9]{8}/);
 });
@@ -76,6 +79,7 @@ test('gamepad confirms the focused lobby control', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('sp.settings', JSON.stringify({ locale: 'en', coach: false })));
   await page.goto(`${host}/?e2e`);
   await page.getByRole('button', { name: /Multiplayer/ }).click();
+  await page.getByRole('button', { name: 'Server / LAN', exact: true }).click();
   await page.evaluate(() => {
     const buttons = Array.from({ length: 17 }, (_, i) => ({ pressed: i === 13, value: i === 13 ? 1 : 0, touched: false }));
     const pad = { index: 0, axes: [0, 0], buttons };

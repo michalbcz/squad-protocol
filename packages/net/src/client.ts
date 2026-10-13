@@ -28,7 +28,7 @@ export class MultiplayerClient {
   private serial = 0;
   private requestPrefix = Array.from(crypto.getRandomValues(new Uint32Array(4)), (n) => n.toString(16).padStart(8, '0')).join('');
 
-  constructor(host: string, credential?: Credential, private factory: (host: string) => Transport = (url) => new WebSocketTransport(url)) {
+  constructor(host: string, credential?: Credential, private factory: (host: string) => Transport = (url) => new WebSocketTransport(url), private options: { automaticReconnect?: boolean } = {}) {
     this.host = hostUrl(host);
     this.credential = credential ? { room: credential.room, token: credential.token } : null;
     this.connect();
@@ -92,6 +92,12 @@ export class MultiplayerClient {
           if (this.credential) this.send({ version: 1, kind: 'resume', ...this.credential });
           else this.attempts = 0;
         } else if (event.kind === 'close') this.lostConnection(event.code);
+        else if (event.kind === 'suspend') {
+          this.synced = false; this.failPending('disconnected'); this.setStatus('reconnecting');
+        } else if (event.kind === 'resume') {
+          this.setStatus('connected');
+          if (this.credential) this.send({ version: 1, kind: 'resume', ...this.credential });
+        }
         else if (event.kind === 'invalid') {
           this.error = 'invalidMessage';
           this.emit({ version: 1, kind: 'error', code: 'invalidMessage' });
@@ -150,6 +156,7 @@ export class MultiplayerClient {
       this.emit({ version: 1, kind: 'error', code: 'seatReplaced' });
       return;
     }
+    if (this.options.automaticReconnect === false) { this.setStatus('closed'); return; }
     if (this.credential && this.attempts < 5) {
       this.setStatus('reconnecting');
       this.reconnectTimer = setTimeout(() => { this.reconnectTimer = null; this.connect(); }, Math.min(5000, 500 * 2 ** this.attempts++));
